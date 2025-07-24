@@ -130,7 +130,7 @@ function SignUp() {
         />
       ))}
       
-      <div className="w-full max-w-lg p-16 space-y-8 bg-white rounded-lg shadow-lg z-50">
+      <div className="w-full h-screen 3xl:h-auto max-w-lg lg:max-w-xl 3xl:max-w-lg p-16 space-y-8 bg-white 3xl:rounded-lg z-50">
         <div className="flex flex-col justify-between items-left space-y-3">
           <h2 className={`text-3xl font-bold text-rose-500`}>Welcome to LyraLabs</h2>
           <p className={`text-sm text-left font-semibold ${isDark ? 'text-gray-400' : 'text-rose-500'}`}>Sign up to start your journey...</p>

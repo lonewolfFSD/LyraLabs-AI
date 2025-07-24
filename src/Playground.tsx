@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { Terminal, Download, Lock, Loader2, Sun, Moon, Mic, Copy, RotateCcw, Check, X, Plus, Send, Bot, Volume2, Bug, Image, Images, Command, FileQuestion, Music2, Music3, FileMusic, ArrowUp, MoreVertical, MoreHorizontal, Pin, MapPin, Paperclip, ImagePlus, LogOut, Flame, Coffee, Home, CloudRain, Gamepad2, HeartCrack, ArrowDown, Settings, Asterisk, Headphones, HelpCircle, User2, PaintBucket, Bell, Trash, Trash2, AlertTriangle, BellDot, CheckCircle, XCircle, Music, Sparkles, AlertCircle, Skull, Coins, AlertOctagon } from 'lucide-react';
+import { Terminal, Download, Lock, Loader2, Sun, Moon, Mic, Copy, RotateCcw, Check, X, Plus, Send, Bot, Volume2, Bug, Image, Images, Command, FileQuestion, Music2, Music3, FileMusic, ArrowUp, MoreVertical, MoreHorizontal, Pin, MapPin, Paperclip, ImagePlus, LogOut, Flame, Coffee, Home, CloudRain, Gamepad2, HeartCrack, ArrowDown, Settings, Asterisk, Headphones, HelpCircle, User2, PaintBucket, Bell, Trash, Trash2, AlertTriangle, BellDot, CheckCircle, XCircle, Music, Sparkles, AlertCircle, Skull, Coins, AlertOctagon, AudioWaveform, Pen } from 'lucide-react';
 import type { Message, Theme } from './type.ts';
 import { db, auth, collection, addDoc, serverTimestamp, query, where, getDocs, doc, setDoc, getDoc, updateDoc } from '../firebase-config'; // Removed Storage imports
 import { useParams, useNavigate } from 'react-router-dom';
@@ -30,7 +30,7 @@ const isNSFWKeyword = (text) => {
 import CommandsOverlay
  from './CommandsOverlay.tsx';
 // Initialize Google Gemini AI
-const genAI = new GoogleGenerativeAI('AIzaSyB7aWHSDdfS01i7627tWt5bS5aMUYYwWCQ');
+const genAI = new GoogleGenerativeAI('AIzaSyAUjcmDNgF0jBFShDK_EaNrgSDqyppBt-4');
 
 // UnrealSpeech API configuration
 const UNREAL_SPEECH_API_KEY = 'jHkES2MDPMQxTiRCYcytOFiZa4xltB1NWwwUIelHHz0EeLBKPXG8xy';
@@ -118,7 +118,7 @@ const ImageUploadModal = ({ isModalOpen, closeModal, handleImageChange, isDark }
     <div className="fixed top-0 left-0 w-full h-[100vh] bg-black/80 z-50 flex items-center justify-center" style={{
       backdropFilter: 'blur(20px)'
     }}>
-      <div className={`rounded-t-3xl sm:rounded-3xl h-[600px] mt-[345px] sm:mt-0 sm:h-auto py-8 px-10 w-full max-w-3xl  ${isDark ? 'bg-rose-900/20 backdrop-blur-2xl border border-rose-200/20' : 'bg-rose-100'}`} style={{ animation: 'fadeIn 0.5s ease' }}>
+      <div className={`rounded-t-3xl sm:rounded-3xl h-[700px] mt-[345px] sm:mt-0 sm:h-auto py-8 px-10 w-full max-w-3xl  ${isDark ? 'bg-rose-900/20 backdrop-blur-2xl border border-rose-200/20' : 'bg-rose-100'}`} style={{ animation: 'fadeIn 0.5s ease' }}>
         <div className="flex justify-between items-center mb-6">
           <h2 className={`text-xl sm:text-2xl ${isDark ? 'text-rose-100' : 'text-rose-500'} font-bold`}>Attach</h2>
           <button onClick={closeModal} className={`${isDark ? 'text-gray-400 hover:text-gray-200' : 'text-rose-400 hover:text-rose-500'}`}>
@@ -679,16 +679,6 @@ const fetchUserTopItems = async (type, timeRange = 'medium_term', limit = 5) => 
     return null;
   };
 
-  // Debug what’s in localStorage on load
-  useEffect(() => {
-    console.log('localStorage contents:', JSON.stringify(localStorage));
-    addDebugLog('debug', 'info', `localStorage contents: ${JSON.stringify(localStorage)}`);
-    if (!spotifyToken) {
-      addDebugLog('debug', 'info', 'No spotify_access_token found in localStorage');
-    } else {
-      addDebugLog('debug', 'success', `Found spotify_access_token: ${spotifyToken}`);
-    }
-  }, [spotifyToken]);
 
   // Handle Spotify redirect
   useEffect(() => {
@@ -1464,7 +1454,23 @@ const getDevices = async () => {
 
   const stopSpeechRecognition = () => { if (speechRecognitionRef.current) speechRecognitionRef.current.stop(); };
 
+    useEffect(() => {
+  // Check latest assistant message for empty content
+  if (!messages || messages.length === 0) return;
+
+  const lastMsg = messages[messages.length - 1];
+
+  if (lastMsg.role === 'assistant' && (!lastMsg.content || lastMsg.content.trim() === '')) {
+    setMessages((prev) => prev.slice(0, -1)); // Remove the last message
+    console.warn('Removed empty assistant message.');
+  }
+}, [messages]);
+
   const renderMessageContent = (content) => {
+    if (typeof content !== 'string' || !content) {
+      return content; // Fallback to empty string or original value
+    }
+
     if (content.toLowerCase().startsWith('/imagine')) {
       const command = '/imagine';
       const rest = content.slice(command.length);
@@ -1485,126 +1491,7 @@ const getDevices = async () => {
         </>
       );
     }
-    if (content.toLowerCase().startsWith('/play')) {
-      const command = '/play';
-      const rest = content.slice(command.length);
-      return (
-        <>
-          <span className={`font-semibold ${isDark ? 'text-rose-200 bg-rose-400/20' : 'text-rose-500 bg-rose-200/50'} px-1 rounded`}>{command}</span>
-          {rest}
-        </>
-      );
-    }
-    if (content.toLowerCase().startsWith('/top artists')) {
-      const command = '/top artists';
-      const rest = content.slice(command.length);
-      return (
-        <>
-          <span className={`font-semibold ${isDark ? 'text-rose-200 bg-rose-400/20' : 'text-rose-500 bg-rose-200/50'} px-1 rounded`}>{command}</span>
-          {rest}
-        </>
-      );
-    }
-    if (content.toLowerCase().startsWith('/top tracks')) {
-      const command = '/top tracks';
-      const rest = content.slice(command.length);
-      return (
-        <>
-          <span className={`font-semibold ${isDark ? 'text-rose-200 bg-rose-400/20' : 'text-rose-500 bg-rose-200/50'} px-1 rounded`}>{command}</span>
-          {rest}
-        </>
-      );
-    }
-    if (content.toLowerCase().startsWith('/top')) {
-      const command = '/top';
-      const rest = content.slice(command.length);
-      return (
-        <>
-          <span className={`font-semibold ${isDark ? 'text-rose-200 bg-rose-400/20' : 'text-rose-500 bg-rose-200/50'} px-1 rounded`}>{command}</span>
-          {rest}
-        </>
-      );
-    }
-    if (content.toLowerCase().startsWith('/pause')) {
-      const command = '/pause';
-      const rest = content.slice(command.length);
-      return (
-        <>
-          <span className={`font-semibold ${isDark ? 'text-rose-200 bg-rose-400/20' : 'text-rose-500 bg-rose-200/50'} px-1 rounded`}>{command}</span>
-          {rest}
-        </>
-      );
-    }
-    if (content.toLowerCase().startsWith('/skip')) {
-      const command = '/skip';
-      const rest = content.slice(command.length);
-      return (
-        <>
-          <span className={`font-semibold ${isDark ? 'text-rose-200 bg-rose-400/20' : 'text-rose-500 bg-rose-200/50'} px-1 rounded`}>{command}</span>
-          {rest}
-        </>
-      );
-    }
-    if (content.toLowerCase().startsWith('/playlist')) {
-      const command = '/playlist';
-      const rest = content.slice(command.length);
-      return (
-        <>
-          <span className={`font-semibold ${isDark ? 'text-rose-200 bg-rose-400/20' : 'text-rose-500 bg-rose-200/50'} px-1 rounded`}>{command}</span>
-          {rest}
-        </>
-      );
-    }
-    if (content.toLowerCase().startsWith('/profile')) {
-      const command = '/profile';
-      const rest = content.slice(command.length);
-      return (
-        <>
-          <span className={`font-semibold ${isDark ? 'text-rose-200 bg-rose-400/20' : 'text-rose-500 bg-rose-200/50'} px-1 rounded`}>{command}</span>
-          {rest}
-        </>
-      );
-    }
-    if (content.toLowerCase().startsWith('/volume')) {
-      const command = '/volume';
-      const rest = content.slice(command.length);
-      return (
-        <>
-          <span className={`font-semibold ${isDark ? 'text-rose-200 bg-rose-400/20' : 'text-rose-500 bg-rose-200/50'} px-1 rounded`}>{command}</span>
-          {rest}
-        </>
-      );
-    }
-    if (content.toLowerCase().startsWith('/resume')) {
-      const command = '/resume';
-      const rest = content.slice(command.length);
-      return (
-        <>
-          <span className={`font-semibold ${isDark ? 'text-rose-200 bg-rose-400/20' : 'text-rose-500 bg-rose-200/50'} px-1 rounded`}>{command}</span>
-          {rest}
-        </>
-      );
-    }
-    if (content.toLowerCase().startsWith('/shuffle')) {
-      const command = '/shuffle';
-      const rest = content.slice(command.length);
-      return (
-        <>
-          <span className={`font-semibold ${isDark ? 'text-rose-200 bg-rose-400/20' : 'text-rose-500 bg-rose-200/50'} px-1 rounded`}>{command}</span>
-          {rest}
-        </>
-      );
-    }
-    if (content.toLowerCase().startsWith('/repeat')) {
-      const command = '/repeat';
-      const rest = content.slice(command.length);
-      return (
-        <>
-          <span className={`font-semibold ${isDark ? 'text-rose-200 bg-rose-400/20' : 'text-rose-500 bg-rose-200/50'} px-1 rounded`}>{command}</span>
-          {rest}
-        </>
-      );
-    }
+  
     return content;
   };
 
@@ -3271,9 +3158,21 @@ useEffect(() => {
         {user ? (
           <div className="relative flex gap-3 justify-end px-4 sm:px-0">
             <div className="relative group">
+              <Pen
+                size={35}
+                fill='currentColor'
+                className="mt-0.5 p-[8px] -mr-1 text-rose-200/90 rounded-lg hover:bg-rose-800/20 hover:cursor-pointer"
+                onClick={resetChat}
+              />
+              <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-rose-900/90 text-rose-100 backdrop-blur-lg text-xs font-semibold px-3 py-2 rounded-md hidden group-hover:block scale-95 group-hover:scale-100 transition-all whitespace-nowrap z-10 shadow-lg">
+                New Chat <span className="text-rose-100/40 text-xs">(Ctrl + J)</span>
+              </span>
+            </div>
+
+            <div className="relative group">
               <Bug
                 size={22}
-                className="mt-0.5 w-9 h-9 p-[8px] text-rose-200/90 rounded-full hover:bg-rose-800/20 hover:cursor-pointer"
+                className="mt-0.5 w-9 h-9 p-[8px] text-rose-200/90 rounded-lg hover:bg-rose-800/20 hover:cursor-pointer"
                 onClick={() => setIsDebugOpen(!isDebugOpen)}
               />
               <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-rose-900/90 text-rose-100 backdrop-blur-lg text-xs font-semibold px-3 py-2 rounded-md hidden group-hover:block scale-95 group-hover:scale-100 transition-all whitespace-nowrap z-10 shadow-lg">
@@ -3342,11 +3241,11 @@ useEffect(() => {
               <div className={`rounded-lg p-4 ${isDark ? 'bg-transparent' : 'bg-rose-100/80 shadow-lg'}`}>
                 <div className="space-y-3">
                 {messages.length === 0 ? (
-                    <div className="text-center overflow-y-hidden text-gray-300 py-36 md:py-36 flex flex-col items-center justify-center space-y-4">
-                      <h1 className="text-[1.6em] -mb-3 md:mb-0 md:text-4xl font-semibold text-white opacity-0" style={{
+                    <div className="text-center overflow-y-hidden text-gray-300 py-8 md:py-16 flex flex-col items-center justify-center space-y-4">
+                      <h1 className="text-[1.6em] -mb-3 md:mb-0 md:text-3xl lg:text-4xl font-semibold text-white opacity-0" style={{
                         animation: 'fadeIn 0.3s forwards', animationDelay: '0.3s'
                       }}>{ getGreeting() }, <span className='text-rose-300 font-bol'>{ firstName } </span></h1>
-                      <h1 className="text-lg md:text-2xl max-w-xs md:max-w-lg font-semibold text-gray-400/70 px-4 opacity-0" style={{
+                      <h1 className="text-lg lg:text-xl 3xl:text-3xl max-w-xs md:max-w-lg font-semibold text-gray-400/70 px-4 opacity-0" style={{
                         animation: 'fadeIn 0.2s forwards', animationDelay: '0.5s'
                       }}>
                       { randomMessage }
@@ -3357,7 +3256,7 @@ useEffect(() => {
                           <button
                             key={index}
                             onClick={() => sendToLyra(suggestion)}
-                            className={`flex items-center gap-2 text-[13.5px] md:text-sm px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 transition-all backdrop-blur animate-fadeIn ${
+                            className={`flex items-center gap-2 text-[13px] md:text-[14px] lg:text-sm px-4 py-2 rounded-full bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 transition-all backdrop-blur animate-fadeIn ${
                               index >= suggestions.length / 1.5 ? 'hidden md:flex' : ''
                             }`}
                             style={{ animationDelay: `${index * 0.15}s`, animationFillMode: "both" }}
@@ -3510,15 +3409,15 @@ useEffect(() => {
         <img
           src={imagePreview}
           alt="Preview"
-          className="h-20 w-20 object-cover rounded-lg border border-rose-200/40 cursor-pointer"
+          className="h-20 w-20 md:w-32 md:h-32 object-cover rounded-lg border border-rose-200/40 cursor-pointer"
           onClick={() => setIsEnlargedPreviewOpen(true)}
         />
         <button
           type="button"
           onClick={removeImage}
-          className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 hover:bg-rose-600 transition-colors"
+          className="absolute top-1.5 ml-[56px] border border-rose-500 md:ml-[100px] bg-rose-900/70 text-white rounded-full p-1 hover:bg-rose-800 transition-colors"
         >
-          <X size={16} />
+          <X size={11} strokeWidth={4} />
         </button>
       </div>
     )}
@@ -3604,7 +3503,7 @@ useEffect(() => {
                           }, 5000);
                         }
                       }}
-                      className="flex items-start gap-2 hover:text-rose-200 hover:bg-rose-900/40 rounded-lg py-3 px-2.5 cursor-pointer transition-colors"
+                      className="flex items-start gap-2 hover:text-rose-200 hover:bg-rose-900/40 rounded-lg py-2 px-2.5 cursor-pointer transition-colors"
                     >
                       <Music className="w-5 h-5" />
                       <div>
@@ -3618,10 +3517,27 @@ useEffect(() => {
                 <hr className="border border-white opacity-10" />
 
                 <li
-                  onClick={triggerCuriosityManually} // placeholder
-                  className="flex items-start gap-2 py-3 px-2.5 hover:text-rose-200 hover:bg-rose-900/40 rounded-lg cursor-pointer transition-colors"
+                  onClick={() => { 
+                    window.location.href = "/voice-mode"
+                  }} // placeholder
+                  className="flex items-start gap-2 py-2 px-2.5 hover:text-rose-200 hover:bg-rose-900/40 rounded-lg cursor-pointer transition-colors"
                 >
-                  <Sparkles className="w-5 h-5" />
+                  <AudioWaveform className="w-4 h-4 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold">Lyra VoiceMode</p>
+                    <p className="text-xs font-normal text-rose-300">
+                      Talk with Lyra in real time.
+                    </p>
+                  </div>
+                </li>
+
+                <hr className="border border-white opacity-10" />
+
+                <li
+                  onClick={triggerCuriosityManually} // placeholder
+                  className="flex items-start gap-2 py-2 px-2.5 hover:text-rose-200 hover:bg-rose-900/40 rounded-lg cursor-pointer transition-colors"
+                >
+                  <Sparkles className="w-5 h-5" fill='currentColor' />
                   <div>
                     <p className="text-sm font-semibold">Lyra's Curiosity</p>
                     <p className="text-xs font-normal text-rose-300">
@@ -3909,15 +3825,15 @@ useEffect(() => {
     />
 
     {/* Settings Panel */}
-    <div className="fixed sm:inset-0 z-50 w-full absolute bottom-0 h-[70%] sm:max-w-4xl sm:h-1/2 sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 rounded-t-3xl sm:rounded-3xl bg-rose-950/50 backdrop-blur-xl border border-white/10 text-white shadow-xl overflow-hidden flex flex-col sm:flex-row animate-fadeIn sm:animate-none">
+    <div className="fixed sm:inset-0 z-50 w-full absolute bottom-0 h-[80%] sm:max-w-4xl sm:h-[70%] sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 rounded-t-3xl sm:rounded-3xl bg-rose-950/50 backdrop-blur-xl border border-white/10 text-white shadow-xl overflow-hidden flex flex-col sm:flex-row animate-fadeIn sm:animate-none">
       
       {/* Mobile Tab Navigation */}
       <div className="sm:hidden bg-rose-950/70 px-8 border-b sm:border-b-0 sm:border-r border-white/10 p-4 flex justify-between items-center">
-        <h2 className="text-base font-semibold">Settings</h2>
+        <h2 className="text-lg font-bold font-semibold">Settings</h2>
         <select
           value={activeTab}
           onChange={(e) => setActiveTab(e.target.value)}
-          className="bg-rose-900/50 w-48 text-white text-sm rounded-lg p-2"
+          className="bg-rose-900/50 w-48 text-white text-sm rounded-md p-2"
         >
           <option value="account">Account</option>
           <option value="customize">Customize</option>

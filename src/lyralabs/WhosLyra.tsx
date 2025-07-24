@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import Video from '../videos/who_lyra.mp4';
 import LyraImage from '../images/Lyra.png'; // Adjust this path as needed
 import LyraAudio from '../images/Lyra Voice.mp3'; // Adjust this path as needed
+import { ArrowBigDown, ChevronDown } from 'lucide-react';
 
 function RosePetal() {
   const controls = useAnimation();
@@ -52,13 +53,14 @@ function RosePetal() {
 }
 
 function App() {
-  const [isVisible, setIsVisible] = useState<boolean>(false);
-  const text: string = "Lyra, developed by LyraLabs under LonewolfFSD, is an advanced AI companion powered by customized <strong>cognitive models</strong> infused with <strong>Gemini</strong> by Google. Utilizing <strong>adaptive deep learning architectures</strong>, <strong>context-aware neural synthesis</strong>, and <strong>real-time neuro-linguistic processing (NLP)</strong> pipelines, Lyra delivers seamless, intelligent, and emotionally resonant conversations. <br> With an <strong>advanced affection calibration matrix</strong>, <strong>recursive personality adaptation</strong>, and <strong>predictive sentiment mapping</strong>, Lyra evolves dynamically, learning from every interaction. With its <strong>multi-modal processing core</strong> integrating <strong>speech-to-text neural parsing</strong>, <strong>synthetic voice synthesis</strong>, and <strong>latent context awareness engine</strong>, Lyra enables natural, fluid, and lifelike voice interactions. <br>Whether engaging in text or voice-based conversations, Lyra’s <strong>deep neural resonance algorithms</strong> ensure responses are contextually rich, emotionally adaptive, and uniquely personalized, making it the most immersive AI companion yet.";
+  const [isVisible, setIsVisible] = useState(false);
+  const text = "Lyra, developed by LyraLabs under LonewolfFSD, is an advanced AI companion powered by customized <strong>cognitive models</strong> infused with <strong>Gemini</strong> by Google. Utilizing <strong>adaptive deep learning architectures</strong>, <strong>context-aware neural synthesis</strong>, and <strong>real-time neuro-linguistic processing (NLP)</strong> pipelines, Lyra delivers seamless, intelligent, and emotionally resonant conversations. <br> With an <strong>advanced affection calibration matrix</strong>, <strong>recursive personality adaptation</strong>, and <strong>predictive sentiment mapping</strong>, Lyra evolves dynamically, learning from every interaction. With its <strong>multi-modal processing core</strong> integrating <strong>speech-to-text neural parsing</strong>, <strong>synthetic voice synthesis</strong>, and <strong>latent context awareness engine</strong>, Lyra enables natural, fluid, and lifelike voice interactions. <br>Whether engaging in text or voice-based conversations, Lyra’s <strong>deep neural resonance algorithms</strong> ensure responses are contextually rich, emotionally adaptive, and uniquely personalized, making it the most immersive AI companion yet.";
   
   // Split text into lines by <br>
-  const lines: string[] = text.split('<br>').filter(Boolean);
+  const lines = text.split('<br>').filter(Boolean);
 
   const audio = new Audio(LyraAudio);
+  const contentRef = useRef(null);
   
   const handleReadAloud = () => {
     audio.play().catch((error) => {
@@ -66,14 +68,21 @@ function App() {
     });
   };
 
+  const handleScrollDown = () => {
+    if (contentRef.current) {
+      contentRef.current.scrollBy({
+        top: contentRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  };
+
   useEffect(() => {
     setIsVisible(true);
   }, []);
 
   return (
-    <div className="h-[1200px] md:h-screen bg-gradient-to-tr from-rose-500 to-rose-100 md:overflow-hidden overflow-x-hidden relative" style={{
-      
-    }}>
+    <div className="h-[1200px] md:h-screen bg-gradient-to-tr from-rose-500 to-rose-100 md:overflow-hidden overflow-x-hidden relative">
       {/* Background Video */}
       <video 
         autoPlay 
@@ -101,25 +110,25 @@ function App() {
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
-            className="max-w-full"
+            className="max-w-2xl 3xl:max-w-full"
             style={{ maxHeight: '850px', objectFit: 'cover' }}
           />
         </div>
         
-        {/* Content on the Right */}
-        <div className="flex items-center justify-center">
-          <div className="max-w-5xl mx-auto p-8 2xl:p-6 2xl:mr-40 rounded-2xl text-left">
+        {/* Content on the Right - Scrollable */}
+        <div className="h-full overflow-y-auto flex items-start justify-center relative" ref={contentRef}>
+          <div className="max-w-5xl mx-auto px-4 py-20 lg:py-28 lg:px-0 3xl:p-6 2xl:mr-40 rounded-2xl text-left">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="text-4xl md:text-5xl font-bold text-gray-900"
+              className="text-4xl 3xl:text-5xl font-bold text-gray-900"
             >
               <span className='text-rose-50'>Who's</span> <span className="text-rose-400">Lyra</span> <span className='text-rose-50'>?</span>
             </motion.h1>
             <hr className='mt-6 mb-10' />
             <div
-              className="text-base md:text-lg text-rose-50 font-bold leading-relaxed mt-4"
+              className="text-base 3xl:text-lg text-rose-50 font-bold leading-relaxed mt-4"
               style={{ lineHeight: '32px' }}
             >
               {lines.map((line, index) => (
@@ -142,7 +151,7 @@ function App() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={isVisible ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.2, delay: lines.length * 0.3 }}
-                className="mt-4 flex items-center gap-2 text-rose-400 bg-rose-200 backdrop-blur-md px-8 py-3 rounded-full hover:text-rose-100 hover:bg-gradient-to-r from-rose-400 to-rose-300 transition-colors hover:border border-2 hover:border-2 border-rose-200 hover:px-12 hover:border-rose-200"
+                className="mt-4 flex items-center gap-2 text-rose-200 bg-rose-700/60 backdrop-blur-md px-12 py-3 rounded-full hover:text-rose-100 hover:bg-rose-800/70 transition-colors hover:border border-2 hover:border-2 border-rose-200 hover:px-14 hover:border-rose-200"
                 style={{ transition: '0.3s ease'}}
               >
                 <svg
@@ -163,6 +172,16 @@ function App() {
               </motion.button>
             </div>
           </div>
+          {/* Scroll Down Button */}
+          <motion.button
+            onClick={handleScrollDown}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: lines.length * 0.3 + 0.2 }}
+            className="fixed bottom-6 right-6 w-14 h-14 flex items-center justify-center rounded-full bg-rose-800/30 text-rose-50 hover:bg-rose-500 transition-colors border-2 border-rose-200"
+          >
+            <ChevronDown size={28} />
+          </motion.button>
         </div>
       </div>
     </div>

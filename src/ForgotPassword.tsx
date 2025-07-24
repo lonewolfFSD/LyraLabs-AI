@@ -69,7 +69,7 @@ function ForgotPassword() {
         />
       ))}
 
-      <div className="w-full max-w-xl mx-6 p-10 md:p-16 space-y-6 bg-white rounded-3xl shadow-lg z-50">
+      <div className="w-full max-w-xl mx-6 p-10 md:p-16 space-y-6 bg-white rounded-3xl border-2 border-rose-300 z-50">
         <div className="flex justify-between items-center">
           <h2 className={`text-[27px] font-bold ${isDark ? 'text-rose-200' : 'text-rose-500'}`}>Forgot Password</h2>
           <button className={`p-2 rounded-full text-rose-400 cursor-default`}>

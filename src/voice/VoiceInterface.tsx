@@ -1,16 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, Repeat, Sparkles, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getAuth, deleteUser, EmailAuthProvider, updatePassword, GoogleAuthProvider, GithubAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { auth, db, remoteConfig } from '../../firebase-config'; // Import Firebase auth and db
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export function VoiceInterface() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const videoRef = useRef(null);
+      const [authUser, setUser] = useState(null);
+      const [userId, setUserId] = useState<string | null>(null);
+  const [randomString, setRandomString] = useState('');
   const [pitchData, setPitchData] = useState<number[]>(new Array(100).fill(128));
+  const [showIntro, setShowIntro] = useState(() => !localStorage.getItem('voiceIntroShown'));
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+    const auth = getAuth();
+    const user = auth.currentUser;
 
   const lyraPrompt = `
     You are Lyra, a friendly and witty AI companion with a warm, playful tone. 
@@ -46,6 +57,33 @@ export function VoiceInterface() {
       setLyraScale(1.0);
     }
   }, [isRecording, isSpeaking, pitchData]);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            setUser(user);
+            setUserId(user.uid);
+            const userKeyDocRef = doc(db, 'user_playground_keys', user.uid);
+            const userKeyDoc = await getDoc(userKeyDocRef);
+    
+            if (userKeyDoc.exists()) {
+              setRandomString(userKeyDoc.data().randomString);
+            } else {
+              const newRandomString = generateRandomString();
+              await setDoc(userKeyDocRef, {
+                randomString: newRandomString,
+                createdAt: Date.now(),
+              });
+              setRandomString(newRandomString);
+            }
+          } else {
+            setUser(null);
+            setRandomString(null);
+          }
+        });
+    
+        return () => unsubscribe();
+      }, []);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -150,7 +188,7 @@ export function VoiceInterface() {
   };
 
   const processVoiceInput = async (text: string) => {
-    const geminiApiKey = "AIzaSyAKdITIR3GpQxLkUtf28rpoB9JVbiVzFBs";
+    const geminiApiKey = "AIzaSyB7aWHSDdfS01i7627tWt5bS5aMUYYwWCQ";
     if (!geminiApiKey) {
       alert('Please provide a Gemini API key in the settings.');
       return;
@@ -158,7 +196,7 @@ export function VoiceInterface() {
 
     const fullPrompt = `${lyraPrompt}\nUser says: "${text}"\nLyra responds:`;
 
-    console.log('Full Prompt Sent to Gemini:', fullPrompt);
+    
 
     let responseText = '';
     try {
@@ -210,6 +248,12 @@ export function VoiceInterface() {
         }),
       });
 
+        useEffect(() => {
+          if (videoRef.current) {
+            videoRef.current.playbackRate = 1.1; // 👈 slower speed (0.5x)
+          }
+        }, []);
+
       if (!ttsResponse.ok) throw new Error('Unreal Speech API failed');
 
       const audioBlob = await ttsResponse.blob();
@@ -234,82 +278,126 @@ export function VoiceInterface() {
     }
   };
 
+    const generateRandomString = (length = 50) => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+};
+
+  const handleIntroClose = () => {
+    setShowIntro(false);
+    localStorage.setItem('voiceIntroShown', 'true');
+  };
+
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen bg-rose-950 p-8 overflow-hidden">
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover z-0"
-        style={{ opacity: '1', filter: 'brightness(0.5) blur(10px)' }}
-      >
-        <source 
-          src="https://motionbgs.com/media/1926/moonlit-bloom-cherry.960x540.mp4" 
-          type="video/mp4" 
-        />
-        Your browser doesn’t support video—imagine some cool scenery here!
-      </video>
+    <div className="relative flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 md:p-8 overflow-hidden font-poppins">
+      {/* Particle Background */}
 
-      <div className="flex gap-8 mb-14 relative z-10">
-        {/* Lyra’s Image (Left) */}
-        <div className="relative">
-          <img
-            src="https://i.ibb.co/qLchMgnd/image.png"
-            alt="Lyra"
-            style={{
-              width: '13rem',
-              height: '13rem',
-              borderRadius: '9999px',
-              borderWidth: '4px',
-              borderColor: '#f87171',
-              transition: 'transform 0.5s',
-              transform: `scale(${lyraScale})`,
-            }}
-            className="animate-slide-up"
-          />
-          {isSpeaking && (
-            <Sparkles
-              className="absolute top-2 left-2 text-rose-500 animate-float"
-              size={60}
-              fill="currentColor"
+              <video
+                  ref={videoRef}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover blur-md"
+                  style={{ zIndex: 10, filter: 'brightness(0.2)' }}
+                >
+                  <source src="https://motionbgs.com/media/1926/moonlit-bloom-cherry.960x540.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="particles">
+          {[...Array(window.innerWidth < 640 ? 30 : 50)].map((_, i) => (
+            <span
+              key={i}
+              className="particle"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 5}s`,
+                background: `radial-gradient(circle, rgba(255,100,100,0.3), transparent)`,
+                width: window.innerWidth < 640 ? '6px' : '8px',
+                height: window.innerWidth < 640 ? '6px' : '8px',
+              }}
             />
-          )}
-        </div>
-
-        {/* User’s Image (Right) */}
-        <div className="relative">
-          <img
-            src="https://www.shutterstock.com/image-vector/profile-default-avatar-icon-user-600nw-2463844171.jpg"
-            alt="User"
-            style={{
-              width: '13rem',
-              height: '13rem',
-              borderRadius: '9999px',
-              borderWidth: '4px',
-              borderColor: '#60a5fa',
-              transition: 'transform 0.5s',
-              transform: `scale(${userScale})`,
-            }}
-            className="animate-slide-up"
-          />
-          {isRecording && (
-            <Mic
-              className="absolute top-2 right-2 text-blue-200 animate-float"
-              size={60}
-            />
-          )}
+          ))}
         </div>
       </div>
 
-      <h1 className="text-2xl mb-4 mt-[-20px] text-pink-500">Real-Time Voice Synthesizer</h1>
-      <div className="w-11/12 max-w-3xl h-48 mb-12 bg-white/30 border border-4 border-pink-300 backdrop-blur-md rounded-xl p-6 z-10 duration-300 animate-slide-up">
+      {/* Introduction Overlay */}
+      {showIntro && (
+        <div className="fixed inset-0 bg-gray-900/95 backdrop-blur-xl z-50 flex items-center justify-center">
+          <div className="bg-rose-950/80 backdrop-blur-xl p-4 sm:p-6 md:p-8 rounded-2xl border border-rose-700/40 max-w-sm sm:max-w-md mx-4 text-center shadow-2xl animate-fade-in">
+            <h2 className="text-xl sm:text-2xl md:text-3xl text-rose-100 font-bold mb-4">Welcome to Lyra’s Voice Mode</h2>
+            <p className="text-rose-200 mb-6 text-sm sm:text-base md:text-lg">
+              Haha, um… talk to me and I’ll respond with my voice! Just hit the mic and start chatting.
+            </p>
+            <button
+              onClick={handleIntroClose}
+              className="bg-rose-500 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl hover:bg-rose-600 transition-colors inline-flex items-center gap-2 text-sm sm:text-base md:text-lg font-semibold"
+            >
+              Get Started
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-row gap-4 sm:gap-8 md:gap-12 mb-8 sm:mb-6 relative z-10">
+
+
+        {/* Lyra’s Image (Left) */}
+        <div className="relative group">
+          <img
+            src="https://i.ibb.co/qLchMgnd/image.png"
+            alt="Lyra"
+            className="w-32 sm:w-32 md:w-40 h-32 sm:h-32 md:h-40 rounded-full border-4 border-rose-500 shadow-lg transform transition-transform duration-300 group-hover:shadow-rose-500/50 animate-pulse-slow"
+            style={{ transform: `scale(${lyraScale})` }}
+          />
+          {isSpeaking && (
+            <Sparkles
+              className="absolute top-1 sm:top-2 left-1 sm:left-2 text-rose-400 animate-float"
+              size={window.innerWidth < 640 ? 40 : 50}
+              fill="currentColor"
+            />
+          )}
+          <div className="absolute inset-0 rounded-full bg-rose-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </div>
+
+        {/* User’s Image (Right) */}
+        <div className="relative group">
+          <img
+            src={user.photoURL || 'https://www.shutterstock.com/image-vector/profile-default-avatar-icon-user-600nw-2463844171.jpg'}
+            alt="User"
+            className="w-32 sm:w-32 md:w-40 h-32 sm:h-32 md:h-40 rounded-full border-4 border-blue-400 shadow-lg transform transition-transform duration-300 group-hover:shadow-blue-400/50 animate-pulse-slow"
+            style={{ transform: `scale(${userScale})` }}
+          />
+          {isRecording && (
+            <Mic
+              className="absolute top-1 sm:top-2 right-1 sm:right-2 text-blue-300 animate-float"
+              size={window.innerWidth < 640 ? 40 : 50}
+            />
+          )}
+          <div className="absolute inset-0 rounded-full bg-blue-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        </div>
+      </div>
+
+      <h1 className="text-xl sm:text-2xl md:text-3xl mb-4 sm:mb-6 text-rose-100 font-bold tracking-tight animate-slide-up">
+        Lyra’s Voice Synthesizer
+      </h1>
+      <div className="w-full max-w-2xl sm:max-w-3xl md:max-w-4xl h-32 sm:h-40 md:h-48 mb-8 sm:mb-10 bg-rose-950/50 border-4 border-rose-300/50 backdrop-blur-md rounded-2xl p-4 sm:p-6 md:p-8 z-10 shadow-xl animate-slide-up">
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <defs>
             <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" style={{ stopColor: '#f472b6', stopOpacity: 1 }} />
-              <stop offset="100%" style={{ stopColor: '#ff6b6b', stopOpacity: 1 }} />
+              <stop offset="0%" style={{ stopColor: '#ff4d4d', stopOpacity: 1 }} />
+              <stop offset="50%" style={{ stopColor: '#f472b6', stopOpacity: 1 }} />
+              <stop offset="100%" style={{ stopColor: '#60a5fa', stopOpacity: 1 }} />
             </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
             <mask id="fadeMask">
               <rect x="0" y="0" width="100" height="100" fill="white" />
               <rect x="0" y="0" width="10" height="100" fill="url(#fadeLeft)" />
@@ -329,50 +417,48 @@ export function VoiceInterface() {
             fill="none"
             stroke="url(#gradient)"
             strokeWidth="2"
+            filter="url(#glow)"
             mask="url(#fadeMask)"
-            className="transition-all duration-300"
+            className="transition-all duration-200"
           />
         </svg>
       </div>
 
-      <div className="flex items-center gap-6 z-10">
+      <div className="flex items-center gap-4 sm:gap-6 md:gap-8 z-10">
         <button
           onClick={toggleRecording}
           title={isRecording ? 'Stop Speaking' : 'Start Speaking'}
+          className={`p-4 sm:p-5 md:p-6 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-105 animate-slide-up ${
+            isRecording ? 'bg-red-600 animate-pulse-custom' : 'bg-gradient-to-br from-rose-500 to-pink-500'
+          } text-white hover:shadow-rose-500/50`}
           style={{ animationDelay: '0.6s' }}
-          className={`p-6 rounded-full shadow-xl transition-all duration-300 animate-slide-up ${
-            isRecording ? 'bg-red-500 animate-pulse' : 'hover:bg-gradient-to-br from-rose-500 to-pink-400 bg-rose-500/80'
-          } text-white`}
         >
-          {isRecording ? <MicOff size={30} /> : <Mic size={30} />}
+          {isRecording ? <MicOff size={window.innerWidth < 640 ? 24 : 30} /> : <Mic size={window.innerWidth < 640 ? 24 : 30} />}
         </button>
         <button
           onClick={replayLastMessage}
           title="Replay Last Message"
-          className="p-6 rounded-full shadow-xl bg-blue-600/80 hover:transform hover:bg-gradient-to-br from-blue-600/80 to-indigo-400 text-white transition-all duration-300 animate-slide-up"
+          className="p-4 sm:p-5 md:p-6 rounded-full shadow-2xl bg-gradient-to-br from-blue-600 to-indigo-500 text-white transition-all duration-300 transform hover:scale-105 hover:shadow-blue-500/50 animate-slide-up"
+          style={{ animationDelay: '0.7s' }}
         >
-          <Repeat size={30} />
+          <Repeat size={window.innerWidth < 640 ? 24 : 30} />
         </button>
         <Link
-          to="/"
-          onClick={(e) => {
-            e.preventDefault();
-            window.location.href = "/";
-          }}
-          style={{ animationDelay: "0.8s" }}
-          className="p-6 rounded-full shadow-xl bg-red-600/90 hover:bg-gradient-to-br from-red-600/80 to-rose-500 text-white transition-all duration-300 animate-slide-up"
+          to={`/playground/${randomString}`}
+          className="p-4 sm:p-5 md:p-6 rounded-full shadow-2xl bg-gradient-to-br from-red-600 to-rose-500 text-white transition-all duration-300 transform hover:scale-105 hover:shadow-red-500/50 animate-slide-up"
           title="Back to Chat"
+          style={{ animationDelay: '0.8s' }}
         >
-          <X size={30} />
+          <X size={window.innerWidth < 640 ? 24 : 30} />
         </Link>
       </div>
 
       <h2
-        className={`mt-7 text-2xl font-semibold transition-all duration-300 z-10 ${
-          isRecording ? 'text-pink-500' : isSpeaking ? 'text-pink-600' : 'text-gray-800'
+        className={`mt-6 sm:mt-8 text-lg sm:text-xl md:text-2xl font-semibold transition-all duration-300 z-10 tracking-tight ${
+          isRecording ? 'text-rose-400' : isSpeaking ? 'text-pink-500' : 'text-rose-200'
         }`}
       >
-        {isRecording ? 'Lyra Listening...' : isSpeaking ? 'Lyra Speaking...' : ''}
+        {isRecording ? 'Lyra is listening...' : isSpeaking ? 'Lyra is speaking...' : 'Talk to Lyra!'}
       </h2>
     </div>
   );
@@ -381,30 +467,60 @@ export function VoiceInterface() {
 const styles = `
   @keyframes float {
     0% { transform: translateY(0); }
-    50% { transform: translateY(-20px); }
+    50% { transform: translateY(-2vh); }
     100% { transform: translateY(0); }
   }
-  @keyframes float-delayed {
-    0% { transform: translateY(0); }
-    50% { transform: translateY(20px); }
-    100% { transform: translateY(0); }
+  @keyframes pulse-slow {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
   }
   @keyframes pulse {
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
   }
+  @keyframes particle {
+    0% { transform: translateY(0) scale(1); opacity: 0.3; }
+    50% { transform: translateY(-10vh) scale(1.2); opacity: 0.5; }
+    100% { transform: translateY(-20vh) scale(1); opacity: 0; }
+  }
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes slide-up {
+    0% { transform: translateY(2vh); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
-  .animate-float-delayed {
-    animation: float-delayed 8s ease-in-out infinite;
+  .animate-pulse-slow {
+    animation: pulse-slow 4s ease-in-out infinite;
   }
   .animate-pulse-custom {
     animation: pulse 1s ease-in-out infinite;
   }
-  .gradient-sparkles {
-    fill: url(#sparkleGradient);
+  .animate-slide-up {
+    animation: slide-up 0.5s ease-out forwards;
+  }
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+  .particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    animation: particle 5s linear infinite;
+  }
+  .font-poppins {
+    font-family: 'Poppins', sans-serif;
   }
 `;
 

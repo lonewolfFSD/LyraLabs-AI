@@ -154,7 +154,7 @@ const SignIn = ({ onSignIn }) => {
       </video>
 
       <div className="flex-1 flex items-center justify-center">
-        <div className={`rounded-2xl py-12 px-16 w-full max-w-lg z-50 shadow-2xl ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-rose-200'}`}>
+        <div className={`3xl:rounded-2xl py-14 3xl:py-12 px-16 w-full md:max-w-lg lg:max-w-xl 3xl:max-w-lg z-50 ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-rose-200'}`}>
           <div className="text-center mb-6">
             <h2 className={`text-3xl text-left font-bold mb-3 ${isDark ? 'text-gray-100' : 'text-rose-500'} mt-2`}>Welcome Back</h2>
             <p className={`text-sm text-left font-semibold ${isDark ? 'text-gray-400' : 'text-rose-500'}`}>Sign in to continue your journey!</p>

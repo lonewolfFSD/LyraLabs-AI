@@ -575,13 +575,13 @@ function App() {
 
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
                 <h1
-                  className="text-rose-300/70 mt-[-500px] md:mt-[-320px] lg:mt-[-40px] select-none text-[7em] md:text-[10em] lg:text-[14em]"
+                  className="text-rose-300/70 mt-[-300px] md:mt-[-200px] lg:mt-[-120px] 3xl:mt-[-40px] select-none text-[7em] md:text-[9em] lg:text-[12em] 3xl:text-[14em]"
                   style={{ letterSpacing: '2px', fontFamily: 'Rubik Spray Paint, system-ui', animation: 'float 3s ease-in-out infinite', filter: 'blur(3px)' }}
                 >
                   Meet
                 </h1>
                 <h1
-                  className="text-rose-300/70 mt-[-130px] md:mt-[-210px] lg:mt-[-340px] select-none text-[12em] md:text-[18em] lg:text-[33em]"
+                  className="text-rose-300/70 mt-[-130px] md:mt-[-180px] lg:mt-[-260px] 3xl:mt-[-340px] select-none text-[12em] md:text-[16em] lg:text-[24em] 3xl:text-[33em]"
                   style={{ letterSpacing: '2px', fontFamily: 'Rubik Spray Paint, system-ui', animation: 'float 2s ease-in-out infinite', filter: 'blur(3px)' }}
                 >
                   Lyra
@@ -589,7 +589,7 @@ function App() {
               </div>
 
               <div
-                className={`card h-[130px] z-0 absolute bottom-14 sm:bottom-10 sm:top-auto lg:bottom-24 left-1/2 sm:left-56 lg:left-[210px] transform -translate-x-1/2 w-11/12 sm:w-auto max-w-md ${isVisible ? 'fade-in' : 'fade-out'}`}
+                className={`card h-[130px] z-10 absolute bottom-6 sm:bottom-10 lg:bottom-32 sm:top-auto 3xl:bottom-24 left-1/2 sm:left-56 3xl:left-[210px] transform -translate-x-1/2 w-11/12 sm:w-auto max-w-md ${isVisible ? 'fade-in' : 'fade-out'}`}
                 style={{ transition: 'opacity 0.3s ease-in-out', opacity: isVisible ? 1 : 0, animation: 'newFade 1s ease' }}
               >
                 <div className="icon-container">
@@ -631,16 +631,16 @@ function App() {
               
 
               <div className="relative flex flex-col items-center w-full max-w-4xl px-4 pb-8">
-                <div className="flex justify-center absolute top-[300px] lg:top-32 left-0 right-0 w-full">
+                <div className="flex justify-center absolute top-[230px] lg:top-32 left-0 right-0 w-full">
                   <img
                     src={Lyra}
                     alt="Lyra"
-                    className="lg:w-full max-w-[600px] lg:max-w-[820px] h-auto object-contain pointer-events-none"
+                    className="lg:w-full sm:max-w-[500px] lg:max-w-[600px] 3xl:max-w-[820px] h-auto object-contain pointer-events-none"
                     style={{ animation: 'float 4s ease-in-out infinite' }}
                   />
                 </div>
 
-                <form onSubmit={handleSubmit} className="w-full max-w-[90%] sm:max-w-[600px] mt-[760px] lg:mb-36 z-0">
+                <form onSubmit={handleSubmit} className="w-full max-w-[90%] sm:max-w-[600px] mt-[560px] sm:mt-[550px] lg:mt-[580px] 3xl:mt-[760px] lg:mb-36 z-0">
                   <div className="relative">
                     <input
                       type="text"
