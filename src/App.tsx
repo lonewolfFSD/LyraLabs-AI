@@ -497,7 +497,7 @@ useEffect(() => {
       <Route
         path="/"
         element={
-          <div className="min-h-screen flex flex-col bg-rose-200/60 relative overflow-hidden" style={{ overflow: 'hidden', height: '100vh' }}>
+          <div className="min-h-screen flex flex-col bg-rose-200/60 relative" style={{ overflow: 'hidden', height: '100vh' }}>
             <video
               ref={videoRef}
               autoPlay
@@ -610,7 +610,7 @@ useEffect(() => {
                 </h1>
               </div>
               <div
-                className={`card h-[130px] z-10 absolute bottom-6 sm:bottom-10 lg:bottom-32 sm:top-auto 3xl:bottom-24 left-1/2 sm:left-56 3xl:left-[210px] transform -translate-x-1/2 w-11/12 sm:w-auto max-w-md ${isVisible ? 'fade-in' : 'fade-out'}`}
+                className={`card h-[130px] z-10 absolute bottom-14 sm:bottom-10 lg:bottom-32 sm:top-auto 3xl:bottom-24 left-1/2 sm:left-56 3xl:left-[210px] transform -translate-x-1/2 w-11/12 sm:w-auto max-w-md ${isVisible ? 'fade-in' : 'fade-out'}`}
                 style={{ transition: 'opacity 0.3s ease-in-out', opacity: isVisible ? 1 : 0, animation: 'newFade 1s ease' }}
               >
                 <div className="icon-container">
@@ -653,7 +653,7 @@ useEffect(() => {
                   <img
                     src={Lyra}
                     alt="Lyra"
-                    className="max-w-[460px] lg:w-full sm:max-w-[500px] lg:max-w-[600px] 3xl:max-w-[820px] h-auto object-contain pointer-events-none"
+                    className="max-w-[480px] lg:w-full sm:max-w-[500px] lg:max-w-[600px] 3xl:max-w-[820px] h-auto object-contain pointer-events-none"
                     style={{ animation: 'float 4s ease-in-out infinite' }}
                   />
                 </div>
