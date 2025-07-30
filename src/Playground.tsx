@@ -3209,7 +3209,7 @@ const toggleOverlay = () => {
                   <ArrowUp strokeWidth={4} size={19} />
                   {(input || uploadedImage) && (
                     <span className="absolute -top-12 left-1/2 -translate-x-1/2 bg-rose-950/90 text-rose-100 backdrop-blur-lg text-xs font-semibold px-3 py-2 rounded-md hidden group-hover:block scale-95 group-hover:scale-100 transition-all whitespace-nowrap z-10 shadow-lg">
-                      <span className={`${messageCount >= 5 ? 'hidden' : ''}`}>Send</span><span className={`${messageCount >= 5 ? '' : 'hidden'}`}>Out of credits. Buy some credits or come back tomorrow</span>
+                      <span className={`${messageCount >= 5 ? 'hidden' : ''}`}>Send</span><span className={`${messageCount >= 5 ? '' : 'hidden'}`}>Out of credits. Please come back tomorrow</span>
                     </span>
                   )}
                 </span>
@@ -3398,12 +3398,6 @@ const toggleOverlay = () => {
 
       {/* CTA Buttons */}
       <div className="flex flex-col sm:flex-row justify-left gap-3">
-        <a
-          href="/buy-credits"
-          className="px-5 py-3 gap-2 bg-rose-700 flex hover:bg-rose-800 rounded-lg text-sm font-semibold text-white text-center transition shadow hover:shadow-lg"
-        >
-          <Coins size={19} /> Buy More Credits
-        </a>
         <button
           onClick={() => setShowCreditsPopup(false)}
           className="px-5 py-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-sm font-semibold transition text-white"
