@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lyralabs.lonewolffsd.in/sitemap.xml
