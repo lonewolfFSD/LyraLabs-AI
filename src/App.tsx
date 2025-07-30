@@ -514,7 +514,7 @@ useEffect(() => {
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
                   <div className="flex items-center">
-                    <img src={Logo} className="w-16 mt-2 md:mt-0 h-auto sm:w-16 pointer-events-none" alt="Logo" />
+                    <img src={Logo} className="w-20 md:w-16 mt-8 md:mt-0 h-auto sm:w-16 pointer-events-none" alt="Logo" />
                   </div>
                   <div className="hidden md:flex items-center space-x-6 lg:space-x-9">
                     <Link to="/whos-lyra" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">WHO’S LYRA?</Link>
@@ -534,9 +534,9 @@ useEffect(() => {
                       <span>TRY LYRA!</span>
                     </button>
                   </div>
-                  <div className="md:hidden flex items-center">
-                    <button onClick={handleToggleNav} className="text-rose-400 hover:text-rose-500">
-                      {isNavOpen ? <X size={28} className={isRotating ? 'animate-rotate' : ''} /> : <Menu size={28} className={isRotating ? 'animate-rotate' : ''} />}
+                  <div className="md:hidden flex items-center p-2 mt-6">
+                    <button onClick={handleToggleNav} className=" text-rose-400 hover:text-rose-500">
+                      {isNavOpen ? <X size={34} className={isRotating ? 'animate-rotate' : ''} /> : <Menu size={34} className={isRotating ? 'animate-rotate' : ''} />}
                     </button>
                   </div>
                 </div>
@@ -653,11 +653,11 @@ useEffect(() => {
                   <img
                     src={Lyra}
                     alt="Lyra"
-                    className="lg:w-full sm:max-w-[500px] lg:max-w-[600px] 3xl:max-w-[820px] h-auto object-contain pointer-events-none"
+                    className=" lg:w-full sm:max-w-[500px] lg:max-w-[600px] 3xl:max-w-[820px] h-auto object-contain pointer-events-none"
                     style={{ animation: 'float 4s ease-in-out infinite' }}
                   />
                 </div>
-                <form onSubmit={handleSubmit} className="w-full max-w-[90%] sm:max-w-[600px] mt-[560px] sm:mt-[550px] lg:mt-[580px] 3xl:mt-[760px] lg:mb-36 z-0">
+                <form onSubmit={handleSubmit} className="w-full max-w-[100%] sm:max-w-[600px] mt-[560px] sm:mt-[550px] lg:mt-[580px] 3xl:mt-[760px] lg:mb-36 z-0">
                   <div className="relative">
                     <input
                       type="text"
