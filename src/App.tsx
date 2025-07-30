@@ -610,7 +610,7 @@ useEffect(() => {
                 </h1>
               </div>
               <div
-                className={`card h-[130px] z-10 absolute bottom-14 sm:bottom-10 lg:bottom-32 sm:top-auto 3xl:bottom-24 left-1/2 sm:left-56 3xl:left-[210px] transform -translate-x-1/2 w-11/12 sm:w-auto max-w-md ${isVisible ? 'fade-in' : 'fade-out'}`}
+                className={`card h-[130px] z-10 absolute bottom-20 sm:bottom-10 lg:bottom-32 sm:top-auto 3xl:bottom-24 left-1/2 sm:left-56 3xl:left-[210px] transform -translate-x-1/2 w-11/12 sm:w-auto max-w-md ${isVisible ? 'fade-in' : 'fade-out'}`}
                 style={{ transition: 'opacity 0.3s ease-in-out', opacity: isVisible ? 1 : 0, animation: 'newFade 1s ease' }}
               >
                 <div className="icon-container">
