@@ -649,11 +649,11 @@ useEffect(() => {
                 </svg>
               </div>
               <div className="relative flex flex-col items-center w-full max-w-4xl px-4 pb-8">
-                <div className="flex justify-center absolute top-[230px] lg:top-32 left-0 right-0 w-full">
+                <div className="flex justify-center absolute top-[180px] lg:top-32 left-0 right-0 w-full">
                   <img
                     src={Lyra}
                     alt="Lyra"
-                    className="max-w-[500px] lg:w-full sm:max-w-[500px] lg:max-w-[600px] 3xl:max-w-[820px] h-auto object-contain pointer-events-none"
+                    className="max-w-[480px] lg:w-full sm:max-w-[500px] lg:max-w-[600px] 3xl:max-w-[820px] h-auto object-contain pointer-events-none"
                     style={{ animation: 'float 4s ease-in-out infinite' }}
                   />
                 </div>
