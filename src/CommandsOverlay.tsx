@@ -64,14 +64,14 @@ const CommandsOverlay: React.FC<CommandsOverlayProps> = ({ onClose }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="fixed inset-0 bg-black/60 backdrop-blur-xl flex justify-center items-center z-50 p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xl flex justify-center items-center z-50 md:p-4"
     >
       <motion.div
         initial={{ scale: 0.9, y: 50, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.9, y: 50, opacity: 0 }}
         transition={{ duration: 0.5, type: "spring", stiffness: 100 }}
-        className="w-full max-w-5xl h-[85vh] rounded-3xl bg-white/10 dark:bg-rose-900/10 backdrop-blur-2xl border border-rose-300/30 shadow-2xl overflow-hidden"
+        className="w-full max-w-5xl h-[100vh] md:h-[85vh] md:rounded-3xl bg-white/10 dark:bg-rose-900/10 backdrop-blur-2xl border border-rose-300/30 shadow-2xl overflow-hidden"
       >
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-rose-300/20 bg-gradient-to-r from-rose-500/10 to-purple-500/10">

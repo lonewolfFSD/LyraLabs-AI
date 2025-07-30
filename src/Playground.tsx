@@ -2843,7 +2843,7 @@ const toggleOverlay = () => {
                 <div className="space-y-3">
                 {messages.length === 0 ? (
                     <div className="text-center overflow-y-hidden text-gray-300 py-8 md:py-16 flex flex-col items-center justify-center space-y-4">
-                      <h1 className="text-[1.6em] -mb-3 md:mb-0 md:text-3xl lg:text-4xl font-semibold text-white opacity-0" style={{
+                      <h1 className="text-[2em] -mb-3 md:mb-0 md:text-3xl lg:text-4xl font-semibold text-white opacity-0" style={{
                         animation: 'fadeIn 0.3s forwards', animationDelay: '0.3s'
                       }}>{ getGreeting() }, <span className='text-rose-300 font-bol'>{ firstName } </span></h1>
                       <h1 className="text-lg lg:text-xl 3xl:text-3xl max-w-xs md:max-w-lg font-semibold text-gray-400/70 px-4 opacity-0" style={{
@@ -3078,7 +3078,7 @@ const toggleOverlay = () => {
 
         <div className="relative inline-block">
           {open && (
-            <div className="absolute bottom-full mb-3 border border-rose-200/50 rounded-xl left-[145px] -translate-x-1/2 py-2.5 px-2.5 min-w-[280px] bg-rose-950/90 z-20 shadow-lg">
+            <div className="absolute bottom-full mb-3 border border-rose-200/50 rounded-xl -left-[30px] md:left-[145px] -translate-x-1/2 py-2.5 px-2.5 min-w-[280px] bg-rose-950/90 z-20 shadow-lg">
               <ul className="space-y-2">
                 <li
                   onClick={() => {
