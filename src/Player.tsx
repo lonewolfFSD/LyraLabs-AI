@@ -343,10 +343,6 @@ function App() {
       });
       spotifyPlayer.addListener('account_error', ({ message }) => {
         console.error('SDK Account Error:', message);
-        setChatHistory(prev => [...prev, {
-          role: 'ai',
-          content: 'Uh… account issue with the player. Spotify Premium is required for playback! >:3'
-        }]);
       });
       spotifyPlayer.addListener('playback_error', ({ message }) => {
         console.error('SDK Playback Error:', message);
@@ -422,10 +418,6 @@ function App() {
 
   const playSpotifyTrack = async (song, artist) => {
     if (!isPremium) {
-      setChatHistory(prev => [...prev, {
-        role: 'ai',
-        content: 'O-oh… you need Spotify Premium to play tracks! Upgrade at spotify.com/premium. >:3'
-      }]);
       return;
     }
     try {
@@ -469,10 +461,7 @@ function App() {
 
   const handlePlayPause = () => {
     if (!isPremium) {
-      setChatHistory(prev => [...prev, {
-        role: 'ai',
-        content: 'O-oh… you need Spotify Premium to control playback! Upgrade at spotify.com/premium. >:3'
-      }]);
+
       return;
     }
     player?.togglePlay();
@@ -480,10 +469,7 @@ function App() {
 
   const handleSkipForward = async () => {
     if (!isPremium) {
-      setChatHistory(prev => [...prev, {
-        role: 'ai',
-        content: 'O-oh… you need Spotify Premium to skip tracks! Upgrade at spotify.com/premium. >:3'
-      }]);
+
       return;
     }
     await player?.nextTrack();
@@ -493,10 +479,7 @@ function App() {
 
   const handleSkipBack = () => {
     if (!isPremium) {
-      setChatHistory(prev => [...prev, {
-        role: 'ai',
-        content: 'O-oh… you need Spotify Premium to go back! Upgrade at spotify.com/premium. >:3'
-      }]);
+
       return;
     }
     player?.previousTrack();
@@ -504,10 +487,7 @@ function App() {
 
   const handleShuffle = () => {
     if (!isPremium) {
-      setChatHistory(prev => [...prev, {
-        role: 'ai',
-        content: 'O-oh… you need Spotify Premium to shuffle! Upgrade at spotify.com/premium. >:3'
-      }]);
+
       return;
     }
     setShuffle(!shuffle);
@@ -519,10 +499,7 @@ function App() {
 
   const handleRepeat = () => {
     if (!isPremium) {
-      setChatHistory(prev => [...prev, {
-        role: 'ai',
-        content: 'O-oh… you need Spotify Premium to repeat! Upgrade at spotify.com/premium. >:3'
-      }]);
+
       return;
     }
     const nextRepeat = repeat === 'off' ? 'context' : repeat === 'context' ? 'track' : 'off';
@@ -535,10 +512,7 @@ function App() {
 
   const handleVolumeChange = (e) => {
     if (!isPremium) {
-      setChatHistory(prev => [...prev, {
-        role: 'ai',
-        content: 'O-oh… you need Spotify Premium to adjust volume! Upgrade at spotify.com/premium. >:3'
-      }]);
+
       return;
     }
     const newVolume = parseInt(e.target.value);
@@ -771,7 +745,7 @@ function App() {
     return (
       <div className="min-h-screen bg-black relative">
         <div className="fixed inset-0 bg-rose-900/10 backdrop-blur-md z-50 flex items-center justify-center">
-          <div className="bg-rose-950/80 backdrop-blur-xl p-12 rounded-2xl border border-rose-700/40 max-w-xl mx-4 text-left">
+          <div className="relative bg-rose-950/80 backdrop-blur-xl p-12 rounded-2xl border border-rose-700/40 max-w-xl mx-4 text-left overflow-hidden shine-card">
           <div className='flex gap-2'>
             <img src="https://i.ibb.co/WN9NYMq7/logo-spotify-removebg-preview.png" className='w-11  h-11 -mt-2' />
             <h2 className="text-2xl text-rose-100 font-bold mb-4">Spotify Premium Required</h2>

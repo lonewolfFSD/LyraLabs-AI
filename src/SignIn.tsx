@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Loader2, Mail, User } from 'lucide-react';
-import { auth } from '../firebase-config';
+import { auth, db } from '../firebase-config';
 import Video from './videos/background.mp4';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider } from 'firebase/auth';
 import { useNavigate, Link } from 'react-router-dom';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase-config';
+import { doc, getDoc, setDoc, collection, query, getDocs, orderBy, where, limit } from 'firebase/firestore';
+import { v4 as uuidv4 } from 'uuid';
 
 const SignIn = ({ onSignIn }) => {
   const [email, setEmail] = useState('');
@@ -14,11 +14,10 @@ const SignIn = ({ onSignIn }) => {
   const [isLoading, setIsLoading] = useState(false);
   const isDark = false;
   const navigate = useNavigate();
+  const videoRef = useRef(null);
 
   const googleProvider = new GoogleAuthProvider();
   const githubProvider = new GithubAuthProvider();
-
-  const videoRef = useRef(null);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -26,6 +25,53 @@ const SignIn = ({ onSignIn }) => {
       video.play().catch((error) => console.error("Video playback failed:", error));
     }
   }, []);
+
+  useEffect(() => {
+    // Check if user is already logged in
+    if (auth.currentUser) {
+      console.log('SignIn: User already logged in:', auth.currentUser.uid);
+      loadOrCreatePlayground();
+    }
+  }, []);
+
+  const loadOrCreatePlayground = async () => {
+    console.log('loadOrCreatePlayground: Checking auth state', { user: auth.currentUser });
+    if (!auth.currentUser) {
+      console.log('loadOrCreatePlayground: No user, staying on signin');
+      return;
+    }
+
+    try {
+      const q = query(
+        collection(db, 'user_playground_conversations'),
+        where('uid', '==', auth.currentUser.uid),
+        orderBy('createdAt', 'desc'),
+        limit(1)
+      );
+      const snapshot = await getDocs(q);
+
+      let targetRandomString;
+      if (!snapshot.empty) {
+        targetRandomString = snapshot.docs[0].id;
+        console.log('Loaded latest playground:', targetRandomString);
+      } else {
+        targetRandomString = uuidv4();
+        const conversationDocRef = doc(db, 'user_playground_conversations', targetRandomString);
+        await setDoc(conversationDocRef, {
+          messages: [],
+          uid: auth.currentUser.uid,
+          createdAt: serverTimestamp(),
+        });
+        console.log('Created new playground:', targetRandomString);
+      }
+
+      console.log('Navigating to:', `/playground/${targetRandomString}`);
+      navigate(`/playground/${targetRandomString}`);
+    } catch (err) {
+      console.error('Error loading or creating playground:', err);
+      setError('Failed to load or create playground. Please try signing in again.');
+    }
+  };
 
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
@@ -104,7 +150,7 @@ const SignIn = ({ onSignIn }) => {
       randomString = userKeyDoc.data().randomString;
       console.log('Existing randomString retrieved:', randomString);
     } else {
-      randomString = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      randomString = uuidv4(); // Use uuidv4 instead of random string
       console.log('New randomString generated:', randomString);
       await setDoc(userKeyDocRef, {
         randomString: randomString,
@@ -121,7 +167,6 @@ const SignIn = ({ onSignIn }) => {
     }
 
     console.log('Navigating to /playground/', randomString);
-    localStorage.setItem('autoLoginUid', randomString);
     navigate(`/playground/${randomString}`);
     if (onSignIn) onSignIn(user);
   };
@@ -211,7 +256,7 @@ const SignIn = ({ onSignIn }) => {
           <div className="text-center">
             <button onClick={handleGoogleSignIn} className={`w-full py-3 rounded-xl font-semibold text-white flex items-center justify-center mb-3 transition-all ${isDark ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'}`}>
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path d="M22.56 12.25c0-.78-.07-1.53-.20-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
               </svg>

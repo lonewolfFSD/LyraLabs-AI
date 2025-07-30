@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, doc, setDoc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
-import { getAuth, sendPasswordResetEmail, signOut, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence, sendPasswordResetEmail, signOut, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getRemoteConfig, fetchAndActivate, getValue } from 'firebase/remote-config'; // Explicitly import getValue
 
@@ -19,6 +19,11 @@ export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const remoteConfig = getRemoteConfig(app);
+
+setPersistence(auth, browserLocalPersistence)
+  .then(() => console.log('Auth persistence set to browserLocalPersistence'))
+  .catch((error) => console.error('Error setting auth persistence:', error));
+
 export { collection, addDoc, serverTimestamp, query, where, getDocs, doc, setDoc, getDoc, updateDoc, Timestamp };
 export { ref, uploadBytes, getDownloadURL };
 export { createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, sendEmailVerification };

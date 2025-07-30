@@ -3,6 +3,8 @@ import { ArrowRight, FileWarning, Hand, HandHeart, HandPlatter, AlertTriangle as
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { fetchAndActivate, getValue } from 'firebase/remote-config';
+import { doc, getDoc, setDoc, serverTimestamp, collection, query, getDocs, orderBy, where, limit } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 import Video from './videos/background.mp4';
 import Lyra from './images/Lyra.png';
 import Logo from './images/Logo.png';
@@ -10,27 +12,18 @@ import Playground from './Playground';
 import AdminInsights from './AdminInsights';
 import Timeline from './Timeline';
 import WhosLyra from './lyralabs/WhosLyra';
-import { auth, db, remoteConfig } from '../firebase-config'; // Import Firebase auth and db
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import SignIn from './SignIn'; // Import the separate SignIn component
+import { auth, db, remoteConfig } from '../firebase-config';
+import SignIn from './SignIn';
 import ForgotPassword from './ForgotPassword';
 import SignUp from './SignUp';
 import Player from './Player';
-
 import VoiceInterface from './voice/VoiceInterface';
-
 import CheckEmail from './CheckEmail';
+import { v4 as uuidv4 } from 'uuid';
 
-const generateRandomString = (length = 50) => {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-};
-
-// Add these constants near your other constants at the top
-const SPOTIFY_CLIENT_ID = '7b85e15a1d04487d82e4323075fff4dc'; // From Spotify Dashboard
-const SPOTIFY_CLIENT_SECRET = '3ddeee0a2748467ea112a2a41f4f23a4'; // From Spotify Dashboard, testing only!
-const SPOTIFY_REDIRECT_URI = 'http://localhost:5173'; // Redirect to root
+const SPOTIFY_CLIENT_ID = '7b85e15a1d04487d82e4323075fff4dc';
+const SPOTIFY_CLIENT_SECRET = '3ddeee0a2748467ea112a2a41f4f23a4';
+const SPOTIFY_REDIRECT_URI = 'http://localhost:5173';
 const SPOTIFY_SCOPES = 'user-read-private user-read-email streaming';
 
 function App() {
@@ -56,25 +49,22 @@ function App() {
   const [isClosing, setIsClosing] = useState(false);
   const [isRotating, setIsRotating] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  
-
   const videoRef = useRef(null);
-
   const [timelineResponses, setTimelineResponses] = useState([]);
   const [randomString, setRandomString] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [quotaMode, setQuotaMode] = useState(false);
+  const [spotifyToken, setSpotifyToken] = useState(localStorage.getItem('spotify_access_token') || null);
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleResponseGenerated = (newResponse) => {
     setTimelineResponses((prev) => [...prev, newResponse]);
   };
-
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [quotaMode, setQuotaMode] = useState(false);
-  const [spotifyToken, setSpotifyToken] = useState(localStorage.getItem('spotify_access_token') || null);
 
   const fetchSpotifyToken = async (code) => {
     try {
@@ -90,17 +80,15 @@ function App() {
           redirect_uri: SPOTIFY_REDIRECT_URI,
         }),
       });
-
       if (!response.ok) {
         throw new Error(`Token fetch failed: ${response.status} - ${await response.text()}`);
       }
-
       const data = await response.json();
       if (data.access_token) {
         setSpotifyToken(data.access_token);
         localStorage.setItem('spotify_access_token', data.access_token);
         if (data.refresh_token) localStorage.setItem('spotify_refresh_token', data.refresh_token);
-        console.log('Spotify token saved:', data.access_token); // Debug
+        console.log('Spotify token saved:', data.access_token);
       } else {
         throw new Error('No access token received');
       }
@@ -113,28 +101,21 @@ function App() {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const state = urlParams.get('state');
-
     if (code && state === 'lyra_spotify_auth') {
-      console.log('Redirect detected - code:', code, 'state:', state); // Debug
+      console.log('Redirect detected - code:', code, 'state:', state);
       fetchSpotifyToken(code);
-      navigate('/', { replace: true }); // Clean URL
+      navigate('/', { replace: true });
     }
   }, [navigate]);
 
   useEffect(() => {
-    // Set config settings for testing
-    remoteConfig.settings.minimumFetchIntervalMillis = 10000; // 10 seconds
-  
-    // Fetch and activate Remote Config
+    remoteConfig.settings.minimumFetchIntervalMillis = 10000;
     fetchAndActivate(remoteConfig)
       .then(() => {
-        // Maintenance Mode
         const maintenanceVal = getValue(remoteConfig, 'maintenance_mode');
         const maintenanceMode = maintenanceVal.asBoolean();
         setMaintenanceMode(maintenanceMode);
         console.log('Fetched Maintenance Mode:', maintenanceMode);
-  
-        // Quota Mode
         const quotaVal = getValue(remoteConfig, 'quota_mode');
         const quotaMode = quotaVal.asBoolean();
         setQuotaMode(quotaMode);
@@ -142,26 +123,10 @@ function App() {
       })
       .catch((error) => {
         console.error('Remote Config fetch failed:', error);
-        setMaintenanceMode(false); // Fallback
-        setQuotaMode(false);       // Fallback
+        setMaintenanceMode(false);
+        setQuotaMode(false);
       });
-  
-    // Optional: Re-fetch periodically (if needed later)
-    // const interval = setInterval(() => {
-    //   fetchAndActivate(remoteConfig)
-    //     .then(() => {
-    //       const maintenanceVal = getValue(remoteConfig, 'maintenance_mode');
-    //       const maintenanceMode = maintenanceVal.asBoolean();
-    //       setMaintenanceMode(maintenanceMode);
-    //       console.log('Refetched Maintenance Mode:', maintenanceMode);
-    //     })
-    //     .catch((error) => console.error('Refetch failed:', error));
-    // }, 15000);
-  
-    // return () => clearInterval(interval); // Cleanup
-  
   }, []);
-  
 
   const handleToggleNav = () => {
     setIsRotating(true);
@@ -183,7 +148,6 @@ function App() {
     let charIndex = 0;
     let isTyping = true;
     let timeoutId;
-
     const type = () => {
       const currentMessage = messages[index];
       if (isTyping) {
@@ -207,7 +171,6 @@ function App() {
         }
       }
     };
-
     type();
     return () => clearTimeout(timeoutId);
   }, []);
@@ -221,71 +184,137 @@ function App() {
     }
   }, []);
 
+  const loadOrCreatePlayground = async () => {
+  console.log('loadOrCreatePlayground: Checking auth state', { user: auth.currentUser });
+  if (!auth.currentUser) {
+    console.log('loadOrCreatePlayground: No user, redirecting to signin');
+    navigate('/signin');
+    return;
+  }
+
+  try {
+    const q = query(
+      collection(db, 'user_playground_conversations'),
+      where('uid', '==', auth.currentUser.uid),
+      orderBy('createdAt', 'desc'),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+
+    let targetRandomString;
+    if (!snapshot.empty) {
+      targetRandomString = snapshot.docs[0].id;
+      console.log('Loaded latest playground:', targetRandomString);
+    } else {
+      targetRandomString = uuidv4();
+      const conversationDocRef = doc(db, 'user_playground_conversations', targetRandomString);
+      await setDoc(conversationDocRef, {
+        messages: [],
+        uid: auth.currentUser.uid,
+        createdAt: serverTimestamp(),
+      });
+      console.log('Created new playground:', targetRandomString);
+    }
+
+    const msgQuery = message.trim() ? `?msg=${encodeURIComponent(message)}` : '';
+    console.log('Navigating to:', `/playground/${targetRandomString}${msgQuery}`);
+    navigate(`/playground/${targetRandomString}${msgQuery}`);
+    setMessage('');
+  } catch (err) {
+    console.error('Error loading or creating playground:', err);
+    navigate('/signin'); // Redirect on error to avoid getting stuck
+  }
+};
+
+const createNewPlayground = async () => {
+  console.log('createNewPlayground: Checking auth state', { user: auth.currentUser });
+  if (!auth.currentUser) {
+    console.log('createNewPlayground: No user, redirecting to signin');
+    navigate('/signin');
+    return;
+  }
+
+  try {
+    const targetRandomString = uuidv4();
+    const conversationDocRef = doc(db, 'user_playground_conversations', targetRandomString);
+    await setDoc(conversationDocRef, {
+      messages: [],
+      uid: auth.currentUser.uid,
+      createdAt: serverTimestamp(),
+    });
+    console.log('Created new playground:', targetRandomString);
+
+    const msgQuery = message.trim() ? `?msg=${encodeURIComponent(message)}` : '';
+    console.log('Navigating to:', `/playground/${targetRandomString}${msgQuery}`);
+    navigate(`/playground/${targetRandomString}${msgQuery}`);
+    setMessage('');
+  } catch (err) {
+    console.error('Error creating new playground:', err);
+    navigate('/signin'); // Redirect on error to avoid getting stuck
+  }
+};
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!message.trim()) return;
-    window.location.href = `/playground/${randomString}?msg=${encodeURIComponent(message)}`;
-    setMessage('');
+    console.log('handleSubmit: Form submitted', { user: auth.currentUser, message: message.trim() });
+    createNewPlayground();
   };
 
   const handleButtonClick = (e) => {
-    if (!message.trim()) {
-      e.preventDefault();
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 2000);
-    } else {
-      setMessage('');
-    }
+    e.preventDefault();
+    console.log('handleButtonClick: TRY LYRA clicked', { user: auth.currentUser });
+    loadOrCreatePlayground();
   };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setLoading(true); // Start loading
-      if (user) {
-        setUser(user);
-        setUserId(user.uid);
-        const userKeyDocRef = doc(db, 'user_playground_keys', user.uid);
-        const userKeyDoc = await getDoc(userKeyDocRef);
-
-        if (userKeyDoc.exists()) {
-          setRandomString(userKeyDoc.data().randomString);
-        } else {
-          const newRandomString = generateRandomString();
-          await setDoc(userKeyDocRef, {
-            randomString: newRandomString,
-            createdAt: Date.now(),
-          });
-          setRandomString(newRandomString);
-        }
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    console.log('onAuthStateChanged: Auth state updated', { user });
+    setLoading(true);
+    if (user) {
+      setUser(user);
+      setUserId(user.uid);
+      console.log('User signed in:', user.uid);
+      const userKeyDocRef = doc(db, 'user_playground_keys', user.uid);
+      const userKeyDoc = await getDoc(userKeyDocRef);
+      if (userKeyDoc.exists()) {
+        setRandomString(userKeyDoc.data().randomString);
+        console.log('Loaded user key:', userKeyDoc.data().randomString);
       } else {
-        setUser(null);
-        setRandomString(null);
+        const newRandomString = uuidv4();
+        await setDoc(userKeyDocRef, {
+          randomString: newRandomString,
+          createdAt: Date.now(),
+        });
+        setRandomString(newRandomString);
+        console.log('Created new user key:', newRandomString);
       }
-      setLoading(false); // End loading
-    });
-
-    return () => unsubscribe();
-  }, []);
+    } else {
+      setUser(null);
+      setRandomString('');
+      console.log('No user signed in');
+    }
+    setLoading(false);
+  }, (error) => {
+    console.error('Auth state error:', error);
+    setLoading(false);
+  });
+  return () => unsubscribe();
+}, []);
 
   const [isVisible, setIsVisible] = useState(true);
   const handleClose = () => setIsVisible(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-  const location = useLocation();
-
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
-  
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-  
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
-  
 
   const socialLinks = [
     { Icon: Instagram, url: 'https://instagram.com', delay: '0s' },
@@ -297,19 +326,17 @@ function App() {
   if (loading) {
     return (
       <div className="bg-transparent h-screen flex items-center justify-center">
-         {isOffline && (
+        {isOffline && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md text-rose-200 shadow-lg z-50">
             <div className="w-full max-w-md md:max-w-xl py-10 px-8 bg-rose-400/50 rounded-3xl border border-rose-200/40 font-mono text-lg text-center space-y-4">
-              
               <div className="flex flex-col items-center">
                 <Warning size={40} className="mb-2" />
                 <h1 className="text-2xl text-rose-100 font-semibold">YOU ARE OFFLINE</h1>
                 <p className="text-sm text-rose-100/80 mt-2">
-                  Um... i-it looks like your internet's gone quiet...  
-                  Maybe check your Wi-Fi or try plugging the cable back in? 
+                  Um... i-it looks like your internet's gone quiet...
+                  Maybe check your Wi-Fi or try plugging the cable back in?
                 </p>
               </div>
-
               <div className="flex flex-wrap justify-center gap-2 pt-4">
                 <button
                   onClick={() => window.location.reload()}
@@ -320,7 +347,7 @@ function App() {
               </div>
             </div>
           </div>
-        )} 
+        )}
       </div>
     );
   }
@@ -355,56 +382,52 @@ function App() {
           style={{ zIndex: 100 }}
         >
           <div className="w-full max-w-2xl p-10 space-y-6 bg-white/90 rounded-2xl shadow-2xl border border-rose-200/50 backdrop-blur-sm text-center transform transition-all duration-500">
-  <div className="flex justify-center">
-    <div className="w-18 h-18 rounded-full flex items-center justify-center">
-      <svg
-        className="w-16 h-16 text-rose-600"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    </div>
-  </div>
-
-  <h1 className="text-4xl font-extrabold text-rose-600 tracking-wide">
-    Scheduled Maintenance
-  </h1>
-
-  <p className="text-md text-gray-700 leading-relaxed max-w-md mx-auto">
-    Lyra is taking a short cosmic nap 🌙 While the stars align and our servers refresh, you won't be able to chat for a bit. She'll be back soon — smarter, snappier, and more curious than ever.
-  </p>
-
-  <p className="text-sm text-gray-500">
-    Stay updated on{' '}
-    <a
-      href="https://twitter.com/lyraswhisper"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="underline text-rose-600 hover:text-rose-800"
-    >
-      Twitter
-    </a>{' '}
-    or hop into{' '}
-    <a
-      href="https://discord.gg/lyraswhisper"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="underline text-rose-600 hover:text-rose-800"
-    >
-      Discord
-    </a>{' '}
-    to vibe with the dev team.
-  </p>
-</div>
-
+            <div className="flex justify-center">
+              <div className="w-18 h-18 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-16 h-16 text-rose-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <h1 className="text-4xl font-extrabold text-rose-600 tracking-wide">
+              Scheduled Maintenance
+            </h1>
+            <p className="text-md text-gray-700 leading-relaxed max-w-md mx-auto">
+              Lyra is taking a short cosmic nap 🌙 While the stars align and our servers refresh, you won't be able to chat for a bit. She'll be back soon — smarter, snappier, and more curious than ever.
+            </p>
+            <p className="text-sm text-gray-500">
+              Stay updated on{' '}
+              <a
+                href="https://twitter.com/lyraswhisper"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-rose-600 hover:text-rose-800"
+              >
+                Twitter
+              </a>{' '}
+              or hop into{' '}
+              <a
+                href="https://discord.gg/lyraswhisper"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline text-rose-600 hover:text-rose-800"
+              >
+                Discord
+              </a>{' '}
+              to vibe with the dev team.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -424,22 +447,19 @@ function App() {
           <source src="https://motionbgs.com/media/1926/moonlit-bloom-cherry.960x540.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
-  
         <div
           className="fixed inset-0 bg-rose-950/30 flex items-center backdrop-blur-sm justify-center z-100"
           style={{ zIndex: 100 }}
         >
           <div className="w-full max-w-2xl p-10 space-y-6 bg-black/30 rounded-2xl shadow-2xl border border-rose-100/20 backdrop-blur-sm text-center transform transition-all duration-500">
             <div className="flex justify-center">
-              <div className="  mb-[-15px] rounded-full flex items-center justify-center">
+              <div className="mb-[-15px] rounded-full flex items-center justify-center">
                 <Power strokeWidth={3} className='text-red-500 w-14 sm:w-16 bg-red-600/10 p-2.5 rounded-full h-auto mb-3' />
               </div>
             </div>
-  
             <h1 className="text-3xl sm:text-4xl font-extrabold text-red-100 tracking-wide">
               Database Overload
             </h1>
-  
             <p className="text-sm sm:text-base text-rose-200 font-semibold leading-relaxed max-w-xl mx-auto">
               LyraLab's system is taking a short break.
               Our database is currently overwhelmed with requests. We're working hard to get things back to normal. She'll be back shortly, ready to assist you once again.
@@ -450,8 +470,6 @@ function App() {
       </div>
     );
   }
-  
-  
 
   return (
     <Routes>
@@ -479,11 +497,7 @@ function App() {
       <Route
         path="/"
         element={
-
-
-          
           <div className="min-h-screen flex flex-col bg-rose-200/60 relative" style={{ overflow: 'hidden', height: '100vh' }}>
-            
             <video
               ref={videoRef}
               autoPlay
@@ -496,8 +510,6 @@ function App() {
               <source src={Video} type="video/mp4" />
               Your browser does not support the video tag.
             </video>
-
-
             <nav className="fixed top-0 left-0 right-0 bg-transparent bg-opacity-70 z-10 text-rose-400 font-semibold" style={{ fontFamily: 'Roboto Mono, monospace' }}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
@@ -508,14 +520,19 @@ function App() {
                     <Link to="/whos-lyra" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">WHO’S LYRA?</Link>
                     <Link to="/lyras-whispers" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA’S DIARY</Link>
                     <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">COMMUNITY</a>
-                    <a href="https://lonewolffsd.in/blogs" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">BLOGS</a>
-                    <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">PRICING</a>
-                    <a href="https://support.lonewolffsd.in" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">SUPPORT</a>
+                    <a href="https://lonewolffsd.in/blogs" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">FSD BLOGS</a>
+                    <a href="https://support.lonewolffsd.in" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRALABS SUPPORT</a>
                   </div>
                   <div className="hidden md:flex">
-                    <Link to={`/playground/${randomString}`} className="px-10 py-2 flex items-center rounded-full border border-rose-300 hover:bg-rose-400/90 hover:shadow-lg hover:text-white transition-colors text-sm lg:text-base">
+                    <button
+                      onClick={handleButtonClick}
+                      disabled={loading}
+                      className={`px-10 py-2 flex items-center rounded-full border border-rose-300 transition-colors text-sm lg:text-base ${
+                        loading ? 'bg-rose-400/50 cursor-not-allowed' : 'hover:bg-rose-400/90 hover:shadow-lg hover:text-white'
+                      }`}
+                    >
                       <span>TRY LYRA!</span>
-                    </Link>
+                    </button>
                   </div>
                   <div className="md:hidden flex items-center">
                     <button onClick={handleToggleNav} className="text-rose-400 hover:text-rose-500">
@@ -533,19 +550,26 @@ function App() {
                       <Link to="/whos-lyra" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">WHO’S LYRA?</Link>
                       <Link to="/lyras-whispers" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA’S DIARY</Link>
                       <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">COMMUNITY</a>
-                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">BLOGS</a>
-                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">PRICING</a>
-                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">SUPPORT</a>
-                      <Link to={`/playground/${randomString}`} onClick={() => setIsNavOpen(false)} className="px-6 py-4 w-full flex justify-center items-center rounded-full border border-rose-300 hover:bg-rose-400/90 hover:shadow-lg hover:text-white transition-colors text-sm">
+                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LONEWOLFFSD BLOGS</a>
+                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRALABS SUPPORT</a>
+                      <button
+                        onClick={() => {
+                          setIsNavOpen(false);
+                          handleButtonClick(new Event('click'));
+                        }}
+                        disabled={loading}
+                        className={`px-6 py-4 w-full flex justify-center items-center rounded-full border border-rose-300 transition-colors text-sm ${
+                          loading ? 'bg-rose-400/50 cursor-not-allowed' : 'hover:bg-rose-400/90 hover:shadow-lg hover:text-white'
+                        }`}
+                      >
                         <span>TRY LYRA!</span>
                         <MessagesSquare className='ml-2.5' size={22} style={{ transform: 'rotate(0deg)'}} />
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 )}
               </div>
             </nav>
-
             {showToast && (
               <div
                 className={`fixed bottom-10 left-10 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg animate-fadeIn ${
@@ -555,11 +579,10 @@ function App() {
               >
                 <span className="flex items-center justify-center gap-2 w-full">
                   <span className={isDark ? 'text-rose-600' : 'text-yellow-500'}><MessageCircleWarning /></span>
-                  Oh, um… could you write something first, please?
+                  Oh, um… please sign in to continue!
                 </span>
               </div>
             )}
-
             <div className="flex-1 flex flex-col items-center justify-center relative">
               {[...Array(20)].map((_, i) => (
                 <div
@@ -572,7 +595,6 @@ function App() {
                   }}
                 />
               ))}
-
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
                 <h1
                   className="text-rose-300/70 mt-[-300px] md:mt-[-200px] lg:mt-[-120px] 3xl:mt-[-40px] select-none text-[7em] md:text-[9em] lg:text-[12em] 3xl:text-[14em]"
@@ -587,7 +609,6 @@ function App() {
                   Lyra
                 </h1>
               </div>
-
               <div
                 className={`card h-[130px] z-10 absolute bottom-6 sm:bottom-10 lg:bottom-32 sm:top-auto 3xl:bottom-24 left-1/2 sm:left-56 3xl:left-[210px] transform -translate-x-1/2 w-11/12 sm:w-auto max-w-md ${isVisible ? 'fade-in' : 'fade-out'}`}
                 style={{ transition: 'opacity 0.3s ease-in-out', opacity: isVisible ? 1 : 0, animation: 'newFade 1s ease' }}
@@ -627,9 +648,6 @@ function App() {
                   ></path>
                 </svg>
               </div>
-
-              
-
               <div className="relative flex flex-col items-center w-full max-w-4xl px-4 pb-8">
                 <div className="flex justify-center absolute top-[230px] lg:top-32 left-0 right-0 w-full">
                   <img
@@ -639,7 +657,6 @@ function App() {
                     style={{ animation: 'float 4s ease-in-out infinite' }}
                   />
                 </div>
-
                 <form onSubmit={handleSubmit} className="w-full max-w-[90%] sm:max-w-[600px] mt-[560px] sm:mt-[550px] lg:mt-[580px] 3xl:mt-[760px] lg:mb-36 z-0">
                   <div className="relative">
                     <input
@@ -656,23 +673,18 @@ function App() {
                         animation: 'animatedShadow 5s ease-in-out infinite',
                       }}
                     />
-                    <Link
-                      to={message.trim() ? `/playground/${randomString}?msg=${encodeURIComponent(message)}` : '#'}
-                      onClick={handleButtonClick}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className={`absolute outline-none right-3.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full transition-colors shadow-sm ${
+                        loading ? 'bg-rose-400/50 cursor-not-allowed' : 'bg-rose-400/100 hover:bg-rose-400/80'
+                      }`}
                     >
-                      <button
-                        type="submit"
-                        className={`absolute outline-none right-3.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full transition-colors shadow-sm ${
-                          message.trim() ? 'bg-rose-400/100 hover:bg-rose-400/80' : 'bg-rose-400/50 cursor-not-allowed'
-                        }`}
-                      >
-                        <ArrowRight className="w-6 h-6 text-white" style={{ strokeWidth: '4' }} />
-                      </button>
-                    </Link>
+                      <ArrowRight className="w-6 h-6 text-white" style={{ strokeWidth: '4' }} />
+                    </button>
                   </div>
                 </form>
               </div>
-
               <div className="fixed bottom-60 lg:bottom-10 lg:right-8 right-6 z-0 flex flex-col space-y-4">
                 {socialLinks.map(({ Icon, url, delay }, index) => (
                   <a
@@ -688,7 +700,6 @@ function App() {
                 ))}
               </div>
             </div>
-
           </div>
         }
       />

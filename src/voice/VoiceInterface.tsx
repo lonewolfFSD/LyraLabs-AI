@@ -125,9 +125,9 @@ export function VoiceInterface() {
       });
     }
 
-    return () => {
-      if (audioContextRef.current) audioContextRef.current.close();
-    };
+    // return () => {
+    //   if (audioContextRef.current) audioContextRef.current.close();
+    // };
   }, [isRecording, isSpeaking]);
 
   const toggleRecording = () => {
@@ -230,6 +230,8 @@ export function VoiceInterface() {
       return;
     }
 
+
+
     setIsSpeaking(true);
     try {
       const ttsResponse = await fetch('https://api.v8.unrealspeech.com/stream', {
@@ -248,11 +250,7 @@ export function VoiceInterface() {
         }),
       });
 
-        useEffect(() => {
-          if (videoRef.current) {
-            videoRef.current.playbackRate = 1.1; // 👈 slower speed (0.5x)
-          }
-        }, []);
+
 
       if (!ttsResponse.ok) throw new Error('Unreal Speech API failed');
 

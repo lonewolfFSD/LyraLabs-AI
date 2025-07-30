@@ -2,12 +2,14 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Terminal, Download, Lock, Loader2, Sun, Moon, Mic, Copy, RotateCcw, Check, X, Plus, Send, Bot, Volume2, Bug, Image, Images, Command, FileQuestion, Music2, Music3, FileMusic, ArrowUp, MoreVertical, MoreHorizontal, Pin, MapPin, Paperclip, ImagePlus, LogOut, Flame, Coffee, Home, CloudRain, Gamepad2, HeartCrack, ArrowDown, Settings, Asterisk, Headphones, HelpCircle, User2, PaintBucket, Bell, Trash, Trash2, AlertTriangle, BellDot, CheckCircle, XCircle, Music, Sparkles, AlertCircle, Skull, Coins, AlertOctagon, AudioWaveform, Pen } from 'lucide-react';
 import type { Message, Theme } from './type.ts';
-import { db, auth, collection, addDoc, serverTimestamp, query, where, getDocs, doc, setDoc, getDoc, updateDoc } from '../firebase-config'; // Removed Storage imports
+import { db, auth, collection, addDoc, serverTimestamp, query, where, getDocs, doc, setDoc, getDoc, updateDoc,  } from '../firebase-config'; // Removed Storage imports
 import { useParams, useNavigate } from 'react-router-dom';
+import { orderBy } from 'firebase/firestore';
 import { getAuth, deleteUser, EmailAuthProvider, updatePassword, GoogleAuthProvider, GithubAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebase-config.ts'; // Adjust path to your Firebase config
 import { Dialog } from "@headlessui/react";
+import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
 
 import * as tf from '@tensorflow/tfjs';
 import * as toxicity from '@tensorflow-models/toxicity';
@@ -15,6 +17,7 @@ import * as toxicity from '@tensorflow-models/toxicity';
 import Player from './Player.tsx';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+
 import Lyra from './images/Lyra-zcTnieyc.jpg';
 
 // Simple keyword-based NSFW filter
@@ -30,11 +33,11 @@ const isNSFWKeyword = (text) => {
 import CommandsOverlay
  from './CommandsOverlay.tsx';
 // Initialize Google Gemini AI
-const genAI = new GoogleGenerativeAI('AIzaSyAUjcmDNgF0jBFShDK_EaNrgSDqyppBt-4');
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 // UnrealSpeech API configuration
-const UNREAL_SPEECH_API_KEY = 'jHkES2MDPMQxTiRCYcytOFiZa4xltB1NWwwUIelHHz0EeLBKPXG8xy';
-const STABLE_HORDE_API_KEY = '8SZWTByQAy912wnHHr9Jpw';
+const UNREAL_SPEECH_API_KEY = import.meta.env.VITE_UNREAL_SPEECH_API_KEY;
+const STABLE_HORDE_API_KEY = import.meta.env.VITE_STABLE_HORDE_API_KEY;
 
 // Constants
 const MAX_MESSAGES = 50;
@@ -263,7 +266,11 @@ function Playground() {
   const [selectedChatImage, setSelectedChatImage] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const speechRecognitionRef = useRef(null);
+  const { conversationId } = useParams();
   const [showOverlay, setShowOverlay] = useState(false);
+  const [showCoversationOverlay, setShowConversationOverlay] = useState(false);
+
+const [conversations, setConversations] = useState([]);
 
     const [showBanOverlay, setShowBanOverlay] = useState(false);
   const [toxicityModel, setToxicityModel] = useState(null);
@@ -310,7 +317,49 @@ function Playground() {
     }, []);
 
 
+const createNewPlayground = async () => {
+  if (!auth.currentUser) {
+    addDebugLog('debug', 'error', 'No authenticated user found');
+    setError('Oh… I-I think you need to sign in first! >:3');
+    navigate('/signin');
+    return;
+  }
 
+  try {
+    // Generate a new unique randomString
+    const newRandomString = uuidv4();
+    addDebugLog('debug', 'info', `Creating new playground with randomString: ${newRandomString}`);
+
+    // Initialize new conversation in Firebase
+    const conversationDocRef = doc(db, 'user_playground_conversations', newRandomString);
+    await setDoc(conversationDocRef, {
+      messages: [],
+      uid: auth.currentUser.uid,
+      createdAt: serverTimestamp(),
+    });
+    addDebugLog('debug', 'success', `New playground initialized: ${newRandomString}`);
+
+    // Clear current messages
+    setMessages([]);
+    setInput('');
+    setImagePreview(null);
+    setUploadedImage(null);
+
+    // Navigate to the new playground
+    navigate(`/playground/${newRandomString}`);
+  } catch (err) {
+    console.error('Failed to create new playground:', err);
+    addDebugLog('debug', 'error', `Failed to create new playground: ${err.message}`);
+    setError(`Uh… I-I couldn’t create a new playground… >:3 Error: ${err.message}`);
+  }
+};
+
+useEffect(() => {
+  if (conversationId) {
+    console.log('useEffect: Fetching messages for conversationId:', conversationId);
+    fetchMessages(conversationId);
+  }
+}, [conversationId]);
 
   const [spotifyToken, setSpotifyToken] = useState(localStorage.getItem('spotify_access_token') || null);
 
@@ -1651,517 +1700,6 @@ const getDevices = async () => {
     }
 
     const lowerMessage = messageContent.toLowerCase().trim();
-
-    // Updated /pause logic in sendToLyra
-    if (lowerMessage === '/pause') {
-      if (!spotifyToken) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-        ]);
-        initiateSpotifyLogin();
-      } else {
-        const result = await pausePlayback();
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: result.message, time: Date.now() },
-        ]);
-      }
-      setIsLoading(false);
-      return;
-    }
-
-    // Handle /skip command
-    if (lowerMessage === '/skip') {
-      if (!spotifyToken) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-        ]);
-        initiateSpotifyLogin();
-      } else {
-        const result = await skipTrack();
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: result.message, time: Date.now() },
-        ]);
-      }
-      setIsLoading(false);
-      return;
-    }
-
-    if (lowerMessage === '/sing') {
-      if (!spotifyToken) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-        ]);
-        initiateSpotifyLogin();
-        setIsLoading(false);
-        return;
-      }
-    
-      const trackResult = await getCurrentTrack();
-      if (!trackResult.success) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: trackResult.message, time: Date.now() },
-        ]);
-        setIsLoading(false);
-        return;
-      }
-    
-      const { name: title, artists } = trackResult.track;
-      const artist = artists[0].name;
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: `O-oh! Let me find the lyrics for "${title}" by ${artist}… >:3`, time: Date.now() },
-      ]);
-    
-      const lyricsResult = await fetchLyrics(artist, title);
-      if (lyricsResult.success) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: `Here’s what I found:\n${lyricsResult.lyrics} >:3`, time: Date.now() },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: lyricsResult.message, time: Date.now() },
-        ]);
-      }
-      setIsLoading(false);
-      return;
-    }
-
-    if (lowerMessage.startsWith('/top')) {
-      if (!spotifyToken) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-        ]);
-        initiateSpotifyLogin();
-        setIsLoading(false);
-        return;
-      }
-    
-      const parts = messageContent.trim().split(' ');
-      const type = parts[1]?.toLowerCase(); // e.g., "artists" or "tracks"
-      const timeRangeInput = parts.slice(2).join(' ').toLowerCase() || 'medium_term'; // e.g., "short term" or "long term"
-      const timeRangeMap = {
-        'short term': 'short_term',
-        'medium term': 'medium_term',
-        'long term': 'long_term',
-      };
-      const timeRange = timeRangeMap[timeRangeInput] || 'medium_term';
-    
-      if (!type || (type !== 'artists' && type !== 'tracks')) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Um… use "/top artists" or "/top tracks" (and maybe "short term", "medium term", or "long term")! >:3', time: Date.now() },
-        ]);
-        setIsLoading(false);
-        return;
-      }
-    
-      const result = await fetchUserTopItems(type, timeRange);
-      if (result.success) {
-        const items = result.data.map((item, index) => {
-          const name = type === 'artists' ? item.name : `${item.name} by ${item.artists[0].name}`;
-          return `${index + 1}. ${name}`;
-        }).join('\n');
-        const timeRangeText = {
-          'short_term': 'the last 4 weeks',
-          'medium_term': 'the last 6 months',
-          'long_term': 'all time',
-        }[timeRange];
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: `O-oh! Here are your top ${type} from ${timeRangeText}:\n${items} >:3`, time: Date.now() },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: result.message, time: Date.now() },
-        ]);
-      }
-      setIsLoading(false);
-      return;
-    }
-    
-    if (lowerMessage === '/profile') {
-      if (!spotifyToken) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-        ]);
-        initiateSpotifyLogin();
-        setIsLoading(false);
-        return;
-      }
-    
-      const result = await fetchUserProfile();
-      if (result.success) {
-        const {
-          display_name,
-          email,
-          country,
-          product,
-          followers,
-          images,
-          id,
-          uri,
-          external_urls,
-        } = result.data;
-    
-        // Capitalize product type for display
-        const accountType = product === 'premium' ? 'Premium' : product === 'free' ? 'Free' : 'Open';
-    
-        // Build the profile table in Markdown
-        const profileText = `O-oh! Here’s your Spotify profile, all shiny and neat! >:3\n\n` +
-          `| **Field**           | **Details**                          |\n` +
-          `|---------------------|--------------------------------------|\n` +
-          `| **Name**            | ${display_name || 'No name set'}     |\n` +
-          `| **Email**           | ${email || 'Not shared'}             |\n` +
-          `| **Country**         | ${country || 'Unknown'}              |\n` +
-          `| **Account**         | ${accountType}                       |\n` +
-          `| **Followers**       | ${followers?.total || 0}             |\n` +
-          `| **Spotify ID**      | ${id || 'Unknown'}                   |\n` +
-          `| **Spotify URI**     | ${uri || 'Not available'}            |\n` +
-          `| **Profile Link**    | ${external_urls?.spotify || '#'} |`;
-    
-        // Set up the image and final text
-        const profileImage = images?.length > 0 ? images[0].url : null;
-        const finalText = profileImage ? `${profileText}\n\nHere’s you! Check the pic below! >:3` : `${profileText}\n\nUm… no profile pic set yet! >:3`;
-    
-        setMessages((prev) => [
-          ...prev,
-          { 
-            role: 'assistant', 
-            content: finalText, 
-            time: Date.now(), 
-            image: profileImage // Attach image URL here
-          },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: result.message, time: Date.now() },
-        ]);
-      }
-      setIsLoading(false);
-      return;
-    }
-
-    // New Commands
-  if (lowerMessage.startsWith('/volume')) {
-    if (!spotifyToken) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-      ]);
-      initiateSpotifyLogin();
-    } else {
-      const volume = parseInt(messageContent.split(' ')[1], 10);
-      if (isNaN(volume) || volume < 0 || volume > 100) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Um… please give me a number between 0 and 100, like "/volume 50"! >:3', time: Date.now() },
-        ]);
-      } else {
-        const result = await setVolume(volume);
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: result.message, time: Date.now() },
-        ]);
-      }
-    }
-    setIsLoading(false);
-    return;
-  }
-
-  if (lowerMessage === '/resume') {
-    if (!spotifyToken) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-      ]);
-      initiateSpotifyLogin();
-    } else {
-      const result = await resumePlayback();
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: result.message, time: Date.now() },
-      ]);
-    }
-    setIsLoading(false);
-    return;
-  }
-
-  if (lowerMessage.startsWith('/playlist')) {
-    if (!spotifyToken) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-      ]);
-      initiateSpotifyLogin();
-    } else {
-      const playlistName = messageContent.replace('/playlist', '').trim();
-      if (!playlistName) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Um… what playlist should I play? Like "/playlist Chill Hits"! >:3', time: Date.now() },
-        ]);
-      } else {
-        const result = await playPlaylistByName(playlistName);
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: result.message, time: Date.now() },
-        ]);
-      }
-    }
-    setIsLoading(false);
-    return;
-  }
-
-  if (lowerMessage === '/recommend') {
-    if (!spotifyToken) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-      ]);
-      initiateSpotifyLogin();
-    } else {
-      const result = await fetchRecommendations();
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: result.message, time: Date.now() },
-      ]);
-    }
-    setIsLoading(false);
-    return;
-  }
-
-  if (lowerMessage === '/prev') {
-    if (!spotifyToken) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-      ]);
-      initiateSpotifyLogin();
-    } else {
-      const result = await skipToPrevious();
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: result.message, time: Date.now() },
-      ]);
-    }
-    setIsLoading(false);
-    return;
-  }
-
-  if (lowerMessage.startsWith('/queue')) {
-    if (!spotifyToken) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-      ]);
-      initiateSpotifyLogin();
-    } else {
-      const query = messageContent.replace('/queue', '').trim();
-      if (!query) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Um… what song should I queue? Like "/queue Blinding Lights"! >:3', time: Date.now() },
-        ]);
-      } else {
-        const searchResult = await searchTrack(query);
-        if (searchResult.success) {
-          const queueResult = await addToQueue(searchResult.uri);
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: `${queueResult.message} (Queued: ${searchResult.name})`, time: Date.now() },
-          ]);
-        } else {
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: searchResult.message, time: Date.now() },
-          ]);
-        }
-      }
-    }
-    setIsLoading(false);
-    return;
-  }
-
-  if (lowerMessage.startsWith('/transfer')) {
-    if (!spotifyToken) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-      ]);
-      initiateSpotifyLogin();
-    } else {
-      const deviceId = messageContent.split(' ')[1]?.trim();
-      if (!deviceId) {
-        const devicesResult = await getDevices();
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: `${devicesResult.message}\nUse "/transfer <device_id>" to switch!`, time: Date.now() },
-        ]);
-      } else {
-        const transferResult = await transferPlayback(deviceId);
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: transferResult.message, time: Date.now() },
-        ]);
-      }
-    }
-    setIsLoading(false);
-    return;
-  }
-
-  if (lowerMessage.startsWith('/shuffle')) {
-    if (!spotifyToken) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-      ]);
-      initiateSpotifyLogin();
-    } else {
-      const state = messageContent.split(' ')[1]?.toLowerCase();
-      if (state !== 'on' && state !== 'off') {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Um… use "/shuffle on" or "/shuffle off"! >:3', time: Date.now() },
-        ]);
-      } else {
-        const result = await toggleShuffle(state === 'on');
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: result.message, time: Date.now() },
-        ]);
-      }
-    }
-    setIsLoading(false);
-    return;
-  }
-
-  if (lowerMessage.startsWith('/repeat')) {
-    if (!spotifyToken) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Oh… um, I-I need you to log in to Spotify first! I’ll open the login page… >:3', time: Date.now() },
-      ]);
-      initiateSpotifyLogin();
-    } else {
-      const state = messageContent.split(' ')[1]?.toLowerCase();
-      if (!['track', 'context', 'off'].includes(state)) {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Um… use "/repeat track", "/repeat context", or "/repeat off"! >:3', time: Date.now() },
-        ]);
-      } else {
-        const result = await toggleRepeat(state);
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: result.message, time: Date.now() },
-        ]);
-      }
-    }
-    setIsLoading(false);
-    return;
-  }
-  
-    const playRequest = detectPlayRequest(messageContent);
-    if (playRequest) {
-      let songName, artistName;
-      if (typeof playRequest === 'object' && playRequest !== null) {
-        songName = playRequest.songName;
-        artistName = playRequest.artistName;
-      } else {
-        const playCommand = messageContent.replace('/play', '').trim();
-        songName = playCommand;
-        const byIndex = playCommand.toLowerCase().indexOf(' by ');
-        if (byIndex !== -1) {
-          songName = playCommand.substring(0, byIndex).trim();
-          artistName = playCommand.substring(byIndex + 4).trim();
-        }
-      }
-  
-      addDebugLog('debug', 'info', `Detected play request - Song: "${songName}", Artist: "${artistName || 'none'}"`);
-  
-      if (!spotifyToken) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: 'assistant',
-            content:
-              'Oh… um, I-I need to connect your Spotify account with your LyraTunes Account first! >///<\n\nPlease type /lyratunes so I can open the login page for you. :3',
-            time: Date.now(),
-          },
-        ]);
-        setIsLoading(false);
-        return;
-      }
-      
-      
-  
-      try {
-        const searchQuery = artistName ? `${songName} artist:${artistName}` : songName;
-        const searchResponse = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=track&limit=1`, {
-          headers: { 'Authorization': `Bearer ${spotifyToken}` },
-        });
-  
-        if (searchResponse.status === 401) {
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: 'Oh… um, the Spotify token expired! I-I’ll ask you to log in again… >:3', time: Date.now() },
-          ]);
-          setSpotifyToken(null);
-          localStorage.removeItem('spotify_access_token');
-          localStorage.removeItem('spotify_refresh_token');
-          initiateSpotifyLogin();
-          setIsLoading(false);
-          return;
-        }
-  
-        const searchData = await searchResponse.json();
-  
-        if (searchData.tracks.items.length > 0) {
-          const trackId = searchData.tracks.items[0].id;
-          const foundSongName = searchData.tracks.items[0].name;
-          const foundArtistName = searchData.tracks.items[0].artists[0].name;
-          const coverArtUrl = searchData.tracks.items[0].album.images[0]?.url; // Get the largest cover art
-  
-          await playSong(trackId);
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: 'assistant',
-              content: `O-oh! I-I found "${foundSongName}" by ${foundArtistName}… it’s open now! >:3`,
-              time: Date.now(),
-              image: coverArtUrl, // Add cover art as image
-            },
-          ]);
-        } else {
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: `Uh… I-I couldn’t find "${songName}${artistName ? ' by ' + artistName : ''}" on Spotify… sorry, bruh! >:3`, time: Date.now() },
-          ]);
-          addDebugLog('debug', 'info', `No tracks found for "${searchQuery}"`);
-        }
-      } catch (err) {
-        console.error('Spotify error:', err);
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: 'Eek! S-something went wrong with Spotify… >:3', time: Date.now() },
-        ]);
-        addDebugLog('debug', 'error', `Spotify API error: ${err.message}`);
-      }
-      setIsLoading(false);
-      return;
-    }
   
     const insight = await extractKeyInsight(messageContent);
     await saveInsightToFirestore(insight);
@@ -2473,40 +2011,6 @@ const getDevices = async () => {
     setInput('');
     return;
   }
-  if (typeof input === 'string' && input.trim().toLowerCase().startsWith('/play')) {
-    const songName = input.replace('/play', '').trim();
-    setIsLoading(true);
-    try {
-      const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(songName)}&type=track&limit=1`, {
-        headers: { 'Authorization': 'Bearer YOUR_SPOTIFY_ACCESS_TOKEN' }
-      });
-      const data = await response.json();
-      if (data.tracks.items.length > 0) {
-        const trackId = data.tracks.items[0].id;
-        const spotifyUrl = `https://open.spotify.com/track/${trackId}`;
-        window.open(spotifyUrl, '_blank');
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: `O-oh! I-I found "${songName}" on Spotify… it’s opening in your browser now! >:3`, time: Date.now() }
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: `Uh… I-I couldn’t find "${songName}" on Spotify… sorry, bruh! >:3`, time: Date.now() }
-        ]);
-      }
-    } catch (err) {
-      console.error('Spotify error:', err);
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Eek! S-something went wrong with Spotify… >:3', time: Date.now() }
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-    setInput('');
-    return;
-  }
 
   // Handle regular messages or /imagine
   const newMessage = {
@@ -2696,7 +2200,16 @@ useEffect(() => {
       return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
-    
+    useEffect(() => {
+      const handleKeyDown = (e) => {
+        if (e.ctrlKey && e.key === 'j') { // Ctrl + `
+          e.preventDefault(); // Stops any default behavior (like browser stuff)
+          resetChat();
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
       // Get user region and timezone
       // Enhanced region detection
@@ -3126,6 +2639,71 @@ useEffect(() => {
   }
 };
 
+const fetchMessages = async (conversationId) => {
+  if (!auth.currentUser || !conversationId) {
+    console.log('fetchMessages: No user or conversationId');
+    setMessages([]);
+    return;
+  }
+  try {
+    const conversationDocRef = doc(db, 'user_playground_conversations', conversationId);
+    const conversationDoc = await getDoc(conversationDocRef);
+    if (conversationDoc.exists()) {
+      const conversationData = conversationDoc.data();
+      console.log('fetchMessages: Current messages state before update:', messages);
+      setMessages(conversationData.messages || []);
+      console.log('fetchMessages: Fetched messages for conversation:', conversationId, conversationData.messages);
+    } else {
+      console.log('fetchMessages: No conversation found for ID:', conversationId);
+      setMessages([]);
+    }
+  } catch (err) {
+    console.error('Error fetching messages:', err);
+    setMessages([]);
+  }
+};
+
+// Add these functions in your Playground component
+const fetchConversations = async () => {
+  if (!auth.currentUser) {
+    console.log('fetchConversations: No user logged in');
+    return;
+  }
+  try {
+    const q = query(
+      collection(db, 'user_playground_conversations'),
+      where('uid', '==', auth.currentUser.uid),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    const conversationData = snapshot.docs.map(doc => ({
+      id: doc.id,
+      data: doc.data()
+    }));
+    const conversationIds = conversationData.map(item => item.id);
+    setConversations(conversationIds);
+    console.log('Fetched conversations:', conversationIds);
+    console.log('Conversation details:', conversationData);
+  } catch (err) {
+    console.error('Error fetching conversations:', err);
+    if (err.code === 'failed-precondition' && err.message.includes('requires an index')) {
+      console.error('Firestore index missing. Create it at:', err.message.match(/https:\/\/[^\s]+/)[0]);
+    }
+  }
+};
+
+const handleConversationClick = (conversationId) => {
+  console.log('handleConversationClick: Navigating to conversation:', conversationId, 'Current messages:', messages);
+  navigate(`/playground/${conversationId}`);
+  setShowOverlay(false);
+};
+
+const toggleOverlay = () => {
+  if (!showCoversationOverlay) {
+    fetchConversations();
+  }
+  setShowConversationOverlay(!showCoversationOverlay);
+};
 
 
   return (
@@ -3157,17 +2735,6 @@ useEffect(() => {
         
         {user ? (
           <div className="relative flex gap-3 justify-end px-4 sm:px-0">
-            <div className="relative group">
-              <Pen
-                size={35}
-                fill='currentColor'
-                className="mt-0.5 p-[8px] -mr-1 text-rose-200/90 rounded-lg hover:bg-rose-800/20 hover:cursor-pointer"
-                onClick={resetChat}
-              />
-              <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-rose-900/90 text-rose-100 backdrop-blur-lg text-xs font-semibold px-3 py-2 rounded-md hidden group-hover:block scale-95 group-hover:scale-100 transition-all whitespace-nowrap z-10 shadow-lg">
-                New Chat <span className="text-rose-100/40 text-xs">(Ctrl + J)</span>
-              </span>
-            </div>
 
             <div className="relative group">
               <Bug
@@ -3197,6 +2764,40 @@ useEffect(() => {
                 }}
               />
             </div>
+
+            {showCoversationOverlay && (
+      <div
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
+        onClick={toggleOverlay}
+      >
+        <div
+          className="bg-rose-900/50 border-2 border-rose-300/40 rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold text-rose-200">Your Conversations</h3>
+            <button onClick={toggleOverlay}>
+              <X className="w-6 h-6 text-rose-200 hover:text-rose-400" />
+            </button>
+          </div>
+          {conversations.length > 0 ? (
+            <ul className="space-y-2">
+              {conversations.map((id) => (
+                <li
+                  key={id}
+                  className="p-3 bg-rose-800/30 hover:bg-rose-800/50 rounded-lg cursor-pointer text-rose-200 text-sm"
+                  onClick={() => handleConversationClick(id)}
+                >
+                  Conversation ID: {id}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-rose-200 text-sm">No conversations found.</p>
+          )}
+        </div>
+      </div>
+    )}
 
             {isProfileOpen && (
               <div
@@ -3386,7 +2987,7 @@ useEffect(() => {
                     <div className="text-center text-rose-200 mx-auto border-t border-l border-r border-rose-400/40 rounded-t-xl text-[12px] bg-rose-950/50 backdrop-blur-sm py-2.5 px-6 w-fit">
   {messageCount < 5 ? (
     <p>
-      <span className='font-semibold text-white'>{5 - messageCount} credits remaining.</span> Need more credits? <u className='text-white font-semibold ml-1 cursor-pointer'>Buy Credits</u>
+      <span className='font-semibold text-white'>{5 - messageCount}/5 credits remaining to chat with Lyra</span>
        {/* {(input.toLowerCase().startsWith('/imagine') || uploadedImage) && (
               <span className="block text-rose-300 mt-1">
                 /imagine or image messages cost 2 credits
