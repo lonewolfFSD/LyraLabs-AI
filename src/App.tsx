@@ -653,7 +653,7 @@ useEffect(() => {
                   <img
                     src={Lyra}
                     alt="Lyra"
-                    className="max-w-[580px] lg:w-full sm:max-w-[500px] lg:max-w-[600px] 3xl:max-w-[820px] h-auto object-contain pointer-events-none"
+                    className="max-w-[500px] lg:w-full sm:max-w-[500px] lg:max-w-[600px] 3xl:max-w-[820px] h-auto object-contain pointer-events-none"
                     style={{ animation: 'float 4s ease-in-out infinite' }}
                   />
                 </div>
