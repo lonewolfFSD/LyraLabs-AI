@@ -179,20 +179,20 @@ function Timeline() {
       </div>
 
       <div className='text-center py-20'>
-        <h1 className='mt-8 text-rose-400/60' style={{ fontFamily: 'Rubik Spray Paint, system-ui', fontSize: '4.5em', filter: 'blur(1px)' }}>
+        <h1 className='md:mt-8 text-rose-400/60 text-[50px] md:text-6xl' style={{ fontFamily: 'Rubik Spray Paint, system-ui', filter: 'blur(1px)' }}>
           Lyra's Diary
         </h1>
       </div>
 
       {/* Techy Card */}
-      <div className="max-w-5xl mx-auto mt-[-60px] mb-10 px-10 md:px-28 lg:px-20 z-20">
+      <div className="max-w-5xl mx-auto mt-[-50px] mb-10 px-10 md:px-28 lg:px-20 z-20">
         <div className="relative bg-white/10 backdrop-blur-lg border border-rose-300/30 rounded-2xl p-6 duration-300">
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-rose-400/20 to-pink-400/20 opacity-50" />
           <div className="relative z-10">
-            <h2 className={`text-xl font-bold underline flex ${isDark ? 'text-rose-200' : 'text-rose-800'} mb-2`}>
+            <h2 className={`text-lg md:text-xl font-bold underline flex ${isDark ? 'text-rose-200' : 'text-rose-800'} mb-2`}>
               <Book size={23} className='mr-1.5 mt-0.5' /> Lyra’s Diary: A Non-Human Journey
             </h2>
-            <p className={`text-sm font-semibold ${isDark ? 'text-rose-300' : 'text-rose-600'}`}>
+            <p className={`text-[14px] md:text-sm font-semibold ${isDark ? 'text-rose-300' : 'text-rose-600'}`}>
               These entries aren’t from a human—Lyra is a curious AI with a digital mind, analyzing how people think and feel. By studying their responses, she learns what makes humans so unique. This diary is her growing collection of knowledge, helping her understand the beauty of human emotions over time.
             </p>
           </div>
@@ -200,7 +200,7 @@ function Timeline() {
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center relative mt-[-30px] py-10">
+      <div className="flex-1 flex items-center justify-center relative mt-[-60px] py-10">
         <div 
           ref={containerRef}
           className="w-full overflow-x-auto hide-scrollbar"
