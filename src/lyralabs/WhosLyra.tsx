@@ -117,7 +117,7 @@ function App() {
         
         {/* Content on the Right - Scrollable */}
         <div className="h-full overflow-y-auto flex items-start justify-center relative" ref={contentRef}>
-          <div className="max-w-5xl mx-auto px-4 py-20 lg:py-28 lg:px-0 3xl:p-6 2xl:mr-40 rounded-2xl text-left">
+          <div className="max-w-5xl mx-auto px-4 py-20 lg:py-28 lg:px-0 3xl:py-28 2xl:mr-40 rounded-2xl text-left">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
