@@ -519,7 +519,7 @@ useEffect(() => {
                   <div className="hidden md:flex items-center space-x-6 lg:space-x-9">
                     <Link to="/whos-lyra" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">WHO’S LYRA?</Link>
                     <Link to="/lyras-whispers" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA’S DIARY</Link>
-                    <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">COMMUNITY</a>
+                    <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA COMMUNITY</a>
                     <a href="https://lonewolffsd.in/blogs" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">FSD BLOGS</a>
                     <a href="https://support.lonewolffsd.in" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRALABS SUPPORT</a>
                   </div>
@@ -549,7 +549,7 @@ useEffect(() => {
                     <div className="flex flex-col space-y-5">
                       <Link to="/whos-lyra" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">WHO’S LYRA?</Link>
                       <Link to="/lyras-whispers" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA’S DIARY</Link>
-                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">COMMUNITY</a>
+                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA COMMUNITY</a>
                       <a href="https://lonewolffsd.in/blogs" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">FSD BLOGS</a>
                       <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRALABS SUPPORT</a>
                       <button
