@@ -129,7 +129,7 @@ Lyra is fully deployable on **Vercel**. Just link your GitHub repo, set up envir
 You’re free to clone, run locally, and contribute to this project.
 But you cannot change Lyra’s name, core behavior, or original main branch.
 
-For full terms, see the [LICENSE.md]() file.
+For full terms, see the [LICENSE.md](https://github.com/lonewolfFSD/LyraLabs-AI/blob/main/License.md) file.
 
 ---
 
