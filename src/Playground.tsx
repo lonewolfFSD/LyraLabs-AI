@@ -2825,7 +2825,7 @@ const toggleOverlay = () => {
           </div>
         )}
       </div>
-        <div className="pt-20 md:pt-20 md:pb-4 overflow-y-auto" style={{ maxHeight: 'calc(95vh - 120px)' }}>
+        <div className="pt-20 md:pt-20 3xl:pt-32 md:pb-4 overflow-y-auto" style={{ maxHeight: 'calc(95vh - 120px)' }}>
           <div ref={chatContainerRef} className="h-full overflow-y-auto px-4 pb-14 flex-1">
             <div className="max-w-3xl mx-auto">
             {showScrollDown && (
@@ -2846,7 +2846,7 @@ const toggleOverlay = () => {
                       <h1 className="text-[2em] -mb-3 md:mb-0 md:text-3xl lg:text-4xl font-semibold text-white opacity-0" style={{
                         animation: 'fadeIn 0.3s forwards', animationDelay: '0.3s'
                       }}>{ getGreeting() }, <span className='text-rose-300 font-bol'>{ firstName } </span></h1>
-                      <h1 className="text-lg lg:text-xl 3xl:text-3xl max-w-xs md:max-w-lg font-semibold text-gray-400/70 px-4 opacity-0" style={{
+                      <h1 className="text-lg lg:text-xl 3xl:text-xl max-w-xs md:max-w-lg font-semibold text-gray-400/70 px-4 opacity-0" style={{
                         animation: 'fadeIn 0.2s forwards', animationDelay: '0.5s'
                       }}>
                       { randomMessage }
