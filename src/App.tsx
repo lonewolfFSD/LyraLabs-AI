@@ -550,7 +550,7 @@ useEffect(() => {
                       <Link to="/whos-lyra" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">WHO’S LYRA?</Link>
                       <Link to="/lyras-whispers" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA’S DIARY</Link>
                       <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">COMMUNITY</a>
-                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LONEWOLFFSD BLOGS</a>
+                      <a href="https://lonewolffsd.in/blogs" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">FSD BLOGS</a>
                       <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRALABS SUPPORT</a>
                       <button
                         onClick={() => {
