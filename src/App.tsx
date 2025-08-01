@@ -17,6 +17,7 @@ import SignIn from './SignIn';
 import ForgotPassword from './ForgotPassword';
 import SignUp from './SignUp';
 import Player from './Player';
+import Downloads from './Downloads';
 import VoiceInterface from './voice/VoiceInterface';
 import CheckEmail from './CheckEmail';
 import { v4 as uuidv4 } from 'uuid';
@@ -480,6 +481,7 @@ useEffect(() => {
       <Route path="/check-email" element={<CheckEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/whos-lyra" element={<WhosLyra />} />
+      <Route path="/downloads" element={<Downloads />} />
       <Route path="/lyratunes" element={<Player />} />
       <Route path="/voice-mode" element={<VoiceInterface />} />
       <Route
@@ -519,9 +521,9 @@ useEffect(() => {
                   <div className="hidden md:flex items-center space-x-6 lg:space-x-9">
                     <Link to="/whos-lyra" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">WHO’S LYRA?</Link>
                     <Link to="/lyras-whispers" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA’S DIARY</Link>
-                    <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA COMMUNITY</a>
-                    <a href="https://lonewolffsd.in/blogs" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">FSD BLOGS</a>
-                    <a href="https://support.lonewolffsd.in" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRALABS SUPPORT</a>
+                    <a href="https://discord.gg/cYuPZuaE6q" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">COMMUNITY</a>
+                    <a href="/downloads" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">DOWNLOADS</a>
+                    <a href="https://support.lonewolffsd.in" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">CONTRIBUTE LYRALABS</a>
                   </div>
                   <div className="hidden md:flex">
                     <button
@@ -549,9 +551,9 @@ useEffect(() => {
                     <div className="flex flex-col space-y-5">
                       <Link to="/whos-lyra" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">WHO’S LYRA?</Link>
                       <Link to="/lyras-whispers" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA’S DIARY</Link>
-                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA COMMUNITY</a>
-                      <a href="https://lonewolffsd.in/blogs" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">FSD BLOGS</a>
-                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRALABS SUPPORT</a>
+                      <a href="https://discord.gg/cYuPZuaE6q" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">COMMUNITY</a>
+                      <a href="/downloads" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">DOWNLOADS</a>
+                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">CONTRIBUTE LYRALABS</a>
                       <button
                         onClick={() => {
                           setIsNavOpen(false);
