@@ -247,7 +247,7 @@ const StickerDownloadPage: React.FC = () => {
         {/* Right Side: Sticker Collections Display */}
         <section className="w-full lg:w-3/4 m-2 lg:m-4 flex flex-col">
           {/* Sort and Filter Options (Fixed) */}
-          <div className="flex space-x-4 mb-4 flex-wrap gap-y-2">
+          <div className="flex sm:space-x-4 mb-4 flex-wrap gap-y-2">
             <div>
               <label className="text-rose-700 font-extrabold mr-2 text-sm lg:text-base">Sort By:</label>
               <select
@@ -288,7 +288,7 @@ const StickerDownloadPage: React.FC = () => {
                       href={collection.downloadLink}
                       className="bg-rose-500 flex gap-1.5 text-xs mb-6 lg:text-sm font-bold text-white px-3 lg:px-4 py-2 rounded-lg hover:bg-rose-600 transition-colors duration-200 transform"
                     >
-                      <Download size={17} strokeWidth={3} /> Download Pack
+                      <Download size={17} strokeWidth={3} /> <span className="hidden sm:block">Download Pack</span> <span className="sm:hidden">Download</span>
                     </a>
                   </div>
                 </div>
@@ -324,7 +324,7 @@ const StickerDownloadPage: React.FC = () => {
                           </svg>
                         </a>
                       </div>
-                      <p className="text-rose-800 text-xs lg:text-sm mt-2">{sticker.name}</p>
+                      <p className="text-rose-800 text-xs lg:text-sm mt-3">{sticker.name}</p>
                     </div>
                   ))}
                 </div>
