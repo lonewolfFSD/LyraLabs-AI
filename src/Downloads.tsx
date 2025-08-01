@@ -249,7 +249,7 @@ const StickerDownloadPage: React.FC = () => {
           {/* Sort and Filter Options (Fixed) */}
           <div className="flex sm:space-x-4 mb-4 flex-wrap gap-y-2">
             <div>
-              <label className="text-rose-700 font-extrabold mr-2 text-sm lg:text-base">Sort By:</label>
+              <label className="text-rose-700 font-extrabold mr-2 text-base">Sort By:</label>
               <select
                 className="bg-white text-rose-700 py-2 text-sm lg:text-[15px] px-4 lg:px-6 text-left font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400"
                 value={sortBy}
@@ -261,7 +261,7 @@ const StickerDownloadPage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="text-rose-700 font-extrabold mr-2 text-sm lg:text-base">Collection Size:</label>
+              <label className="text-rose-700 font-extrabold mr-2 text-base">Collection Size:</label>
               <select
                 className="bg-white font-semibold text-rose-700 py-2 px-3 text-sm lg:text-base rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400"
                 value={collectionSize}
@@ -292,7 +292,7 @@ const StickerDownloadPage: React.FC = () => {
                     </a>
                   </div>
                 </div>
-                <p className="text-rose-700/80 text-xs lg:text-sm mb-4 -mt-6 lg:-mt-4">{collection.description}</p>
+                <p className="text-rose-700/80 text-xs lg:text-sm mb-3 -mt-4">{collection.description}</p>
                 {/* Horizontal Scrollable Sticker Previews */}
                 <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-thin scrollbar-thumb-rose-400 scrollbar-track-rose-100">
                   {collection.stickers.map((sticker, index) => (
