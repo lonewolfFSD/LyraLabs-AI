@@ -292,7 +292,7 @@ const StickerDownloadPage: React.FC = () => {
                     </a>
                   </div>
                 </div>
-                <p className="text-rose-700/80 text-xs lg:text-sm mb-3 -mt-4">{collection.description}</p>
+                <p className="text-rose-700/80 text-xs lg:text-sm mb-3 -mt-2 lg:-mt-4">{collection.description}</p>
                 {/* Horizontal Scrollable Sticker Previews */}
                 <div className="flex overflow-x-auto space-x-4 pb-4 scrollbar-thin scrollbar-thumb-rose-400 scrollbar-track-rose-100">
                   {collection.stickers.map((sticker, index) => (
