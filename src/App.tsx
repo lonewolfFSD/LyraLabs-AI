@@ -522,8 +522,8 @@ useEffect(() => {
                     <Link to="/whos-lyra" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">WHO’S LYRA?</Link>
                     <Link to="/lyras-whispers" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA’S DIARY</Link>
                     <a href="https://discord.gg/cYuPZuaE6q" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">COMMUNITY</a>
-                    <a href="/downloads" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">DOWNLOADS</a>
-                    <a href="https://support.lonewolffsd.in" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">CONTRIBUTE LYRALABS</a>
+                    <a href="/downloads" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRALABS COLLECTIONS</a>
+                    <a href="https://support.lonewolffsd.in" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">CONTRIBUTE</a>
                   </div>
                   <div className="hidden md:flex">
                     <button
@@ -552,8 +552,8 @@ useEffect(() => {
                       <Link to="/whos-lyra" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">WHO’S LYRA?</Link>
                       <Link to="/lyras-whispers" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRA’S DIARY</Link>
                       <a href="https://discord.gg/cYuPZuaE6q" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">COMMUNITY</a>
-                      <a href="/downloads" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">DOWNLOADS</a>
-                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">CONTRIBUTE LYRALABS</a>
+                      <a href="/downloads" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">LYRALABS COLLECTIONS</a>
+                      <a href="#" className="hover:text-rose-500 transition-colors hover:font-bold hover:underline text-sm lg:text-base">CONTRIBUTE</a>
                       <button
                         onClick={() => {
                           setIsNavOpen(false);
