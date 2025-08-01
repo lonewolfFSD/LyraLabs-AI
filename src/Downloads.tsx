@@ -324,7 +324,7 @@ const StickerDownloadPage: React.FC = () => {
                           </svg>
                         </a>
                       </div>
-                      <p className="text-rose-800 text-xs lg:text-sm mt-3">{sticker.name}</p>
+                      <p className="text-rose-800 text-sm mt-3">{sticker.name}</p>
                     </div>
                   ))}
                 </div>
